@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="App de treino ABC para musculação. Acompanhe seus exercícios, cargas e evolução.">
+    <meta name="theme-color" content="#0a0a0f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Meu Treino ABC</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+
+    <!-- Plyr CSS -->
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
+
+    <!-- App CSS -->
+    <link rel="stylesheet" href="styles.css?v=4">
+</head>
+
+<body>
+
+    <header>
+        <h1>Treino ABC</h1>
+        <div id="treino-label" class="treino-label">Peito / Ombro / Tríceps</div>
+        <div class="stats-container">
+            <span>🔥 Sequência: <strong id="streak-days">0</strong> dias</span>
+            <span>💪 Total: <strong id="total-days">0</strong> dias</span>
+        </div>
+        <div class="timer-container">
+            <span class="timer-display" id="timer">01:00</span>
+            <button class="btn-timer" id="btn-start">Iniciar</button>
+            <button class="btn-timer reset-btn" id="btn-reset">Reset</button>
+        </div>
+        <div class="timer-presets">
+            <button class="preset-btn" data-seconds="30">30s</button>
+            <button class="preset-btn active" data-seconds="60">60s</button>
+            <button class="preset-btn" data-seconds="90">90s</button>
+            <button class="preset-btn" data-seconds="120">2min</button>
+        </div>
+    </header>
+
+    <nav class="tabs">
+        <button class="tab-btn active" data-tab="A">Treino A</button>
+        <button class="tab-btn" data-tab="B">Treino B</button>
+        <button class="tab-btn" data-tab="C">Treino C</button>
+    </nav>
+
+    <!-- Edit Workout Button -->
+    <div class="edit-bar">
+        <button class="btn-edit-workout" id="btn-edit-workout">✏️ Editar Treino</button>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-wrapper">
+        <div class="progress-bar-container">
+            <div class="progress-bar-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="progress-text" id="progress-text">0/7 exercícios — 0%</div>
+    </div>
+
+    <!-- Exercise Cards -->
+    <div id="content" class="exercise-list"></div>
+
+    <!-- Dialog: Notificações (substitui alert) -->
+    <dialog class="app-dialog" id="app-dialog">
+        <div class="dialog-icon" id="dialog-icon">🎉</div>
+        <div class="dialog-title" id="dialog-title">Título</div>
+        <div class="dialog-message" id="dialog-message">Mensagem</div>
+        <button type="button" class="dialog-btn" id="dialog-close-btn">OK</button>
+    </dialog>
+
+    <!-- Dialog: Histórico de Cargas -->
+    <dialog class="app-dialog history-dialog" id="history-dialog">
+        <div class="dialog-icon">📊</div>
+        <div class="dialog-title" id="history-title">Histórico</div>
+        <ul class="history-list" id="history-list"></ul>
+        <button type="button" class="dialog-btn" id="history-close-btn">Fechar</button>
+    </dialog>
+
+    <!-- Dialog: Editor de Treino -->
+    <dialog class="app-dialog editor-dialog" id="editor-dialog">
+        <div class="editor-header">
+            <h2 id="editor-title">Editar Treino A</h2>
+            <button type="button" class="btn-close-editor" id="btn-close-editor">×</button>
+        </div>
+        <div class="editor-body" id="editor-body">
+            <!-- Populated dynamically -->
+        </div>
+        <div class="editor-footer">
+            <button type="button" class="btn-dialog-secondary" id="editor-cancel-btn">Cancelar</button>
+            <button type="button" class="dialog-btn" id="editor-save-btn">Salvar Treino</button>
+        </div>
+    </dialog>
+
+    <!-- Dialog: Catálogo de Exercícios -->
+    <dialog class="app-dialog catalog-dialog" id="catalog-dialog">
+        <div class="catalog-header">
+            <h2>📋 Catálogo de Exercícios</h2>
+            <input type="text" class="catalog-search" id="catalog-search" placeholder="Buscar exercício...">
+        </div>
+        <div class="catalog-groups" id="catalog-groups">
+            <!-- Populated dynamically -->
+        </div>
+        <div class="catalog-list" id="catalog-list">
+            <!-- Populated dynamically -->
+        </div>
+        <div class="catalog-footer">
+            <button type="button" class="btn-dialog-secondary" id="catalog-close-btn">Fechar</button>
+        </div>
+    </dialog>
+
+    <!-- Dialog: Editar Link YouTube -->
+    <dialog class="app-dialog yt-dialog" id="yt-dialog">
+        <div class="dialog-icon">🎥</div>
+        <div class="dialog-title" id="yt-dialog-title">Link do YouTube</div>
+        <input type="text" class="custom-input" id="yt-link-input" placeholder="Cole o link do YouTube aqui...">
+        <div class="yt-dialog-buttons">
+            <button type="button" class="btn-dialog-secondary" id="yt-cancel-btn">Cancelar</button>
+            <button type="button" class="dialog-btn" id="yt-save-btn">Salvar</button>
+        </div>
+    </dialog>
+
+    <!-- PWA Install Banner -->
+    <div id="install-banner" class="install-banner">
+        <div class="install-info">
+            <span class="install-icon">🏋️</span>
+            <div>
+                <strong>Instalar Treino ABC</strong>
+                <p>Acesso rápido e offline!</p>
+            </div>
+        </div>
+        <div class="install-actions">
+            <button class="btn-install-cancel" id="btn-install-cancel">Agora não</button>
+            <button class="btn-install" id="btn-install">Instalar</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="data/exercises.js"></script>
+    <script src="data/exercise_catalog.js"></script>
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    <script src="app.js?v=4"></script>
+
+    <!-- PWA Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(function() {
+                // Service worker registration failed silently
+            });
+        }
+    </script>
+</body>
+
+</html>

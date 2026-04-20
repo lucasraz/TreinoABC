@@ -1,0 +1,1050 @@
+/**
+ * Treino ABC — App Principal
+ * 
+ * Funcionalidades:
+ * - Treinos A/B/C com tabs
+ * - Timer configurável com presets e som
+ * - Histórico de cargas por exercício
+ * - Sistema de streak (sequência de dias)
+ * - Barra de progresso por treino
+ * - Auto-reset de checks por dia
+ * - Modais nativos (<dialog>)
+ * - Editor de treinos (catálogo + exercícios customizados)
+ */
+
+// ============================================
+// MÓDULO: Storage (centralizado)
+// ============================================
+
+const Storage = {
+    get(key, fallback) {
+        try {
+            const data = localStorage.getItem(key);
+            return data ? JSON.parse(data) : fallback;
+        } catch {
+            return fallback;
+        }
+    },
+    set(key, value) {
+        localStorage.setItem(key, JSON.stringify(value));
+    }
+};
+
+// ============================================
+// MÓDULO: Estado do App
+// ============================================
+
+let currentTab = 'A';
+let savedData = Storage.get('treino_data', {});
+let statsData = Storage.get('treino_stats', { lastDate: null, totalDays: 0, streak: 0 });
+let historyData = Storage.get('treino_history', {});
+let customTreinos = Storage.get('custom_treinos', null); // null = usar padrão
+
+// Timer state
+let timerInterval = null;
+let timerPreset = 60;
+let timeLeft = 60;
+let isRunning = false;
+
+// Video player state
+let activePlayer = null;
+
+// Editor state
+let editorWorkout = []; // working copy during editing
+let editingYtExerciseIndex = -1; // which exercise is having its YT link edited
+let catalogSelectedGroup = 'Todos';
+
+/**
+ * Retorna os treinos ativos (customizados ou padrão).
+ * Se o usuário customizou, usa os salvos; senão, usa TREINOS.
+ */
+function getActiveWorkouts() {
+    return customTreinos || TREINOS;
+}
+
+/**
+ * Gera um ID único para exercícios customizados.
+ */
+function generateExerciseId() {
+    return 'custom_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 4);
+}
+
+// ============================================
+// MÓDULO: Utilidades
+// ============================================
+
+function getTodayDate() {
+    return new Date().toISOString().split('T')[0];
+}
+
+function formatDate(dateStr) {
+    const [y, m, d] = dateStr.split('-');
+    return `${d}/${m}/${y}`;
+}
+
+function sanitize(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// ============================================
+// MÓDULO: Dialog (substitui alert())
+// ============================================
+
+function showDialog(icon, title, message) {
+    const dialog = document.getElementById('app-dialog');
+    document.getElementById('dialog-icon').textContent = icon;
+    document.getElementById('dialog-title').textContent = title;
+    document.getElementById('dialog-message').textContent = message;
+    dialog.showModal();
+}
+
+function closeDialog() {
+    document.getElementById('app-dialog').close();
+}
+
+function showHistoryDialog(exerciseId, exerciseName) {
+    const dialog = document.getElementById('history-dialog');
+    const list = document.getElementById('history-list');
+    document.getElementById('history-title').textContent = exerciseName;
+
+    const entries = historyData[exerciseId] || [];
+    
+    if (entries.length === 0) {
+        list.innerHTML = '<li class="history-empty">Nenhum registro ainda.<br>Salve sua carga para começar!</li>';
+    } else {
+        // Mostra do mais recente para o mais antigo
+        list.innerHTML = entries
+            .slice()
+            .reverse()
+            .map(e => `<li><span class="history-date">${formatDate(e.date)}</span><span class="history-value">${sanitize(String(e.carga))} kg</span></li>`)
+            .join('');
+    }
+    
+    dialog.showModal();
+}
+
+function closeHistoryDialog() {
+    document.getElementById('history-dialog').close();
+}
+
+// ============================================
+// MÓDULO: Som do Timer (Web Audio API)
+// ============================================
+
+function playTimerSound() {
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Toca 3 beeps curtos
+        [0, 0.25, 0.5].forEach(delay => {
+            const oscillator = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            oscillator.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            oscillator.frequency.value = 880;
+            oscillator.type = 'sine';
+            gain.gain.value = 0.3;
+            
+            oscillator.start(audioCtx.currentTime + delay);
+            oscillator.stop(audioCtx.currentTime + delay + 0.15);
+        });
+    } catch {
+        // Fallback silencioso se Audio API não disponível
+    }
+}
+
+// ============================================
+// MÓDULO: Auto-reset por dia
+// ============================================
+
+function checkDayReset() {
+    const today = getTodayDate();
+    const lastCheckDate = Storage.get('treino_check_date', null);
+    
+    if (lastCheckDate !== today) {
+        // Novo dia: limpa todos os checks mas mantém as cargas
+        Object.keys(savedData).forEach(key => {
+            if (savedData[key]) {
+                savedData[key].checked = false;
+            }
+        });
+        Storage.set('treino_data', savedData);
+        Storage.set('treino_check_date', today);
+    }
+}
+
+// ============================================
+// MÓDULO: Stats (streak e total)
+// ============================================
+
+function updateStatsUI() {
+    document.getElementById('streak-days').textContent = statsData.streak;
+    document.getElementById('total-days').textContent = statsData.totalDays;
+}
+
+function finishWorkout() {
+    const today = getTodayDate();
+    
+    if (statsData.lastDate === today) {
+        showDialog('💪', 'Já registrado!', 'Você já registrou um treino hoje. Volte amanhã para aumentar sua sequência!');
+        return;
+    }
+    
+    if (statsData.lastDate) {
+        const last = new Date(statsData.lastDate);
+        const current = new Date(today);
+        const diffTime = Math.abs(current - last);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 1) {
+            statsData.streak += 1;
+        } else {
+            statsData.streak = 1;
+        }
+    } else {
+        statsData.streak = 1;
+    }
+    
+    statsData.totalDays += 1;
+    statsData.lastDate = today;
+    
+    Storage.set('treino_stats', statsData);
+    updateStatsUI();
+    
+    showDialog('🎉', 'Treino concluído!', `Parabéns! Você treinou ${statsData.totalDays} dias no total. Sequência atual: ${statsData.streak} dias!`);
+}
+
+// ============================================
+// MÓDULO: Progresso
+// ============================================
+
+function updateProgress() {
+    const workouts = getActiveWorkouts();
+    const exercises = workouts[currentTab] || [];
+    const total = exercises.length;
+    const done = exercises.filter(ex => savedData[ex.id] && savedData[ex.id].checked).length;
+    const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+    
+    const fill = document.getElementById('progress-fill');
+    const text = document.getElementById('progress-text');
+    
+    if (fill) fill.style.width = percent + '%';
+    if (text) text.textContent = `${done}/${total} exercícios — ${percent}%`;
+}
+
+// ============================================
+// MÓDULO: Renderização dos exercícios
+// ============================================
+
+function renderExercises(tab) {
+    const container = document.getElementById('content');
+    container.innerHTML = '';
+    
+    // Atualiza label do treino
+    const label = document.getElementById('treino-label');
+    if (label) label.textContent = TREINO_LABELS[tab] || '';
+
+    const workouts = getActiveWorkouts();
+    const exercises = workouts[tab] || [];
+
+    exercises.forEach(ex => {
+        const data = savedData[ex.id] || { carga: '', checked: false };
+        const card = document.createElement('div');
+        card.className = 'exercise-card' + (data.checked ? ' completed' : '');
+        card.id = 'card-' + ex.id;
+
+        // Header com nome e check
+        const header = document.createElement('div');
+        header.className = 'ex-header';
+
+        const info = document.createElement('div');
+        const title = document.createElement('div');
+        title.className = 'ex-title';
+        title.textContent = ex.name;
+        const series = document.createElement('div');
+        series.className = 'ex-series';
+        series.textContent = ex.series;
+        info.appendChild(title);
+        info.appendChild(series);
+
+        const checkBtn = document.createElement('button');
+        checkBtn.className = 'check-btn' + (data.checked ? ' checked' : '');
+        checkBtn.setAttribute('aria-label', 'Marcar ' + ex.name + ' como feito');
+        checkBtn.addEventListener('click', function() {
+            toggleCheck(ex.id, this);
+        });
+
+        header.appendChild(info);
+        header.appendChild(checkBtn);
+
+        // Actions: vídeo + carga
+        const actions = document.createElement('div');
+        actions.className = 'ex-actions';
+
+        const videoButtons = document.createElement('div');
+        videoButtons.className = 'video-buttons';
+
+        // Só mostra botões de vídeo se o exercício tem yt_id
+        if (ex.yt_id) {
+            const btnVideo = document.createElement('button');
+            btnVideo.className = 'btn-video';
+            btnVideo.textContent = '▶ Ver Vídeo';
+            btnVideo.addEventListener('click', function() {
+                toggleVideo(ex.id, ex.yt_id);
+            });
+
+            const btnYt = document.createElement('a');
+            btnYt.className = 'btn-yt-external';
+            btnYt.href = 'https://www.youtube.com/watch?v=' + ex.yt_id;
+            btnYt.target = '_blank';
+            btnYt.rel = 'noopener noreferrer';
+            btnYt.textContent = '▶ YouTube';
+
+            videoButtons.appendChild(btnVideo);
+            videoButtons.appendChild(btnYt);
+        } else {
+            const noVideo = document.createElement('span');
+            noVideo.style.cssText = 'font-size:0.8rem;color:var(--text-muted);font-style:italic';
+            noVideo.textContent = 'Sem vídeo';
+            videoButtons.appendChild(noVideo);
+        }
+
+        const inputsGroup = document.createElement('div');
+        inputsGroup.className = 'inputs-group';
+
+        const inputCarga = document.createElement('input');
+        inputCarga.type = 'number';
+        inputCarga.className = 'input-carga';
+        inputCarga.placeholder = 'Kg';
+        inputCarga.min = '0';
+        inputCarga.max = '500';
+        inputCarga.step = '0.5';
+        inputCarga.value = data.carga;
+        inputCarga.id = 'input-' + ex.id;
+        inputCarga.setAttribute('aria-label', 'Carga para ' + ex.name);
+        inputCarga.addEventListener('change', function() {
+            saveCarga(ex.id, this.value);
+        });
+
+        const btnHistory = document.createElement('button');
+        btnHistory.className = 'btn-history';
+        btnHistory.textContent = '📊';
+        btnHistory.title = 'Ver histórico de cargas';
+        btnHistory.setAttribute('aria-label', 'Histórico de ' + ex.name);
+        btnHistory.addEventListener('click', function() {
+            showHistoryDialog(ex.id, ex.name);
+        });
+
+        inputsGroup.appendChild(inputCarga);
+        inputsGroup.appendChild(btnHistory);
+
+        actions.appendChild(videoButtons);
+        actions.appendChild(inputsGroup);
+
+        // Video container
+        const videoBox = document.createElement('div');
+        videoBox.className = 'video-container';
+        videoBox.id = 'video-box-' + ex.id;
+
+        card.appendChild(header);
+        card.appendChild(actions);
+        card.appendChild(videoBox);
+        container.appendChild(card);
+    });
+
+    // Botão concluir
+    const finishBtn = document.createElement('button');
+    finishBtn.className = 'btn-finish';
+    finishBtn.id = 'btn-finish';
+    finishBtn.textContent = 'Concluir Treino de Hoje 🎉';
+    finishBtn.addEventListener('click', finishWorkout);
+    container.appendChild(finishBtn);
+
+    updateProgress();
+}
+
+// ============================================
+// MÓDULO: Vídeo (Plyr + YouTube)
+// ============================================
+
+function toggleVideo(exId, ytId) {
+    const videoBox = document.getElementById('video-box-' + exId);
+
+    if (videoBox.classList.contains('active')) {
+        videoBox.classList.remove('active');
+        if (activePlayer) {
+            activePlayer.destroy();
+            activePlayer = null;
+        }
+        videoBox.innerHTML = '';
+    } else {
+        // Fecha vídeos abertos
+        document.querySelectorAll('.video-container.active').forEach(box => {
+            box.classList.remove('active');
+            box.innerHTML = '';
+        });
+        if (activePlayer) {
+            activePlayer.destroy();
+            activePlayer = null;
+        }
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'plyr__video-embed';
+        wrapper.id = 'player-' + exId;
+
+        const iframe = document.createElement('iframe');
+        iframe.src = 'https://www.youtube-nocookie.com/embed/' + ytId + '?origin=https://plyr.io&iv_load_policy=3&modestbranding=1&playsinline=1&showinfo=0&rel=0&enablejsapi=1';
+        iframe.allowFullscreen = true;
+        iframe.allow = 'autoplay';
+
+        wrapper.appendChild(iframe);
+        videoBox.appendChild(wrapper);
+        videoBox.classList.add('active');
+
+        activePlayer = new Plyr('#player-' + exId, {
+            youtube: { noCookie: true, rel: 0, showinfo: 0, iv_load_policy: 3, modestbranding: 1 }
+        });
+    }
+}
+
+// ============================================
+// MÓDULO: Tabs
+// ============================================
+
+function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    // Encontrar o botão correto pelo data attribute
+    const activeBtn = document.querySelector('.tab-btn[data-tab="' + tab + '"]');
+    if (activeBtn) activeBtn.classList.add('active');
+    renderExercises(tab);
+}
+
+// ============================================
+// MÓDULO: Carga + Histórico
+// ============================================
+
+function saveCarga(id, value) {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue) || numValue < 0) return;
+
+    if (!savedData[id]) savedData[id] = {};
+    savedData[id].carga = value;
+    Storage.set('treino_data', savedData);
+
+    // Salva no histórico (máximo 1 registro por dia por exercício)
+    const today = getTodayDate();
+    if (!historyData[id]) historyData[id] = [];
+    
+    const todayEntry = historyData[id].find(e => e.date === today);
+    if (todayEntry) {
+        todayEntry.carga = numValue;
+    } else {
+        historyData[id].push({ date: today, carga: numValue });
+    }
+    
+    // Limita histórico a 90 dias
+    if (historyData[id].length > 90) {
+        historyData[id] = historyData[id].slice(-90);
+    }
+    
+    Storage.set('treino_history', historyData);
+}
+
+function toggleCheck(id, btnElement) {
+    if (!savedData[id]) savedData[id] = {};
+    savedData[id].checked = !savedData[id].checked;
+    Storage.set('treino_data', savedData);
+
+    btnElement.classList.toggle('checked');
+    btnElement.closest('.exercise-card').classList.toggle('completed');
+    
+    // Risca/desrisca o título
+    const titleEl = btnElement.closest('.exercise-card').querySelector('.ex-title');
+    if (titleEl) {
+        // O CSS cuida disso via .completed .ex-title
+    }
+    
+    updateProgress();
+}
+
+// ============================================
+// MÓDULO: Timer
+// ============================================
+
+function updateTimerDisplay() {
+    const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+    const s = (timeLeft % 60).toString().padStart(2, '0');
+    const display = document.getElementById('timer');
+    display.textContent = m + ':' + s;
+    
+    // Warning visual nos últimos 5 segundos
+    if (timeLeft <= 5 && timeLeft > 0 && isRunning) {
+        display.classList.add('warning');
+    } else {
+        display.classList.remove('warning');
+    }
+}
+
+function setTimerPreset(seconds) {
+    if (isRunning) return; // Não muda preset enquanto roda
+    timerPreset = seconds;
+    timeLeft = seconds;
+    updateTimerDisplay();
+    
+    // Atualiza botões de preset
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.classList.toggle('active', parseInt(btn.dataset.seconds) === seconds);
+    });
+}
+
+function toggleTimer() {
+    const btn = document.getElementById('btn-start');
+    if (isRunning) {
+        clearInterval(timerInterval);
+        btn.textContent = 'Retomar';
+        btn.classList.remove('stop');
+    } else {
+        btn.textContent = 'Pausar';
+        btn.classList.add('stop');
+        timerInterval = setInterval(function() {
+            if (timeLeft > 0) {
+                timeLeft--;
+                updateTimerDisplay();
+            } else {
+                clearInterval(timerInterval);
+                isRunning = false;
+                playTimerSound();
+                if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                showDialog('⏰', 'Tempo esgotado!', 'Seu descanso acabou. Hora da próxima série!');
+                resetTimer();
+            }
+        }, 1000);
+    }
+    isRunning = !isRunning;
+}
+
+function resetTimer() {
+    clearInterval(timerInterval);
+    isRunning = false;
+    timeLeft = timerPreset;
+    updateTimerDisplay();
+    const btn = document.getElementById('btn-start');
+    btn.textContent = 'Iniciar';
+    btn.classList.remove('stop');
+}
+
+// ============================================
+// MÓDULO: Editor de Treinos
+// ============================================
+
+/**
+ * Extrai o YouTube Video ID de uma URL ou ID direto.
+ * Aceita: URLs completas, URLs curtas (youtu.be), ou IDs diretos.
+ */
+function extractYouTubeId(input) {
+    if (!input) return '';
+    input = input.trim();
+    
+    // Já é um ID de 11 caracteres?
+    if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+    
+    // URL do YouTube
+    try {
+        const url = new URL(input);
+        if (url.hostname.includes('youtube.com')) {
+            return url.searchParams.get('v') || '';
+        }
+        if (url.hostname.includes('youtu.be')) {
+            return url.pathname.slice(1).split('/')[0] || '';
+        }
+    } catch {
+        // não é URL válida
+    }
+    return '';
+}
+
+function openEditor() {
+    const workouts = getActiveWorkouts();
+    // Deep copy do treino atual para edição
+    editorWorkout = (workouts[currentTab] || []).map(ex => ({
+        id: ex.id,
+        name: ex.name,
+        series: ex.series,
+        yt_id: ex.yt_id || ''
+    }));
+    
+    document.getElementById('editor-title').textContent = 'Editar Treino ' + currentTab;
+    renderEditorList();
+    document.getElementById('editor-dialog').showModal();
+}
+
+function closeEditor() {
+    document.getElementById('editor-dialog').close();
+}
+
+function renderEditorList() {
+    const body = document.getElementById('editor-body');
+    body.innerHTML = '';
+    
+    // Seção: exercícios atuais
+    const titleCurrent = document.createElement('div');
+    titleCurrent.className = 'editor-section-title';
+    titleCurrent.textContent = 'Exercícios do Treino ' + currentTab + ' (' + editorWorkout.length + ')';
+    body.appendChild(titleCurrent);
+    
+    if (editorWorkout.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'history-empty';
+        empty.textContent = 'Nenhum exercício. Adicione do catálogo ou crie um novo!';
+        body.appendChild(empty);
+    } else {
+        const list = document.createElement('ul');
+        list.className = 'editor-exercise-list';
+        
+        editorWorkout.forEach(function(ex, index) {
+            const item = document.createElement('li');
+            item.className = 'editor-exercise-item';
+            
+            // Info
+            const info = document.createElement('div');
+            info.className = 'editor-ex-info';
+            
+            const name = document.createElement('div');
+            name.className = 'editor-ex-name';
+            name.textContent = ex.name;
+            
+            const ytInfo = document.createElement('div');
+            if (ex.yt_id) {
+                ytInfo.className = 'editor-ex-yt';
+                ytInfo.textContent = '🎥 ' + ex.yt_id;
+            } else {
+                ytInfo.className = 'editor-ex-yt no-video';
+                ytInfo.textContent = 'Sem vídeo';
+            }
+            
+            info.appendChild(name);
+            info.appendChild(ytInfo);
+            
+            // Series input
+            const seriesInput = document.createElement('input');
+            seriesInput.type = 'text';
+            seriesInput.className = 'editor-series-input';
+            seriesInput.value = ex.series;
+            seriesInput.placeholder = '3x 10 rep';
+            seriesInput.addEventListener('change', function() {
+                editorWorkout[index].series = this.value;
+            });
+            
+            // Edit YT button
+            const btnEditYt = document.createElement('button');
+            btnEditYt.type = 'button';
+            btnEditYt.className = 'btn-edit-yt';
+            btnEditYt.textContent = '🎥';
+            btnEditYt.title = 'Editar link YouTube';
+            btnEditYt.addEventListener('click', function(e) {
+                e.preventDefault();
+                openYtEditor(index);
+            });
+            
+            // Remove button
+            const btnRemove = document.createElement('button');
+            btnRemove.type = 'button';
+            btnRemove.className = 'btn-remove-ex';
+            btnRemove.textContent = '✕';
+            btnRemove.title = 'Remover exercício';
+            btnRemove.addEventListener('click', function(e) {
+                e.preventDefault();
+                editorWorkout.splice(index, 1);
+                renderEditorList();
+            });
+            
+            item.appendChild(info);
+            item.appendChild(seriesInput);
+            item.appendChild(btnEditYt);
+            item.appendChild(btnRemove);
+            list.appendChild(item);
+        });
+        
+        body.appendChild(list);
+    }
+    
+    // Botão: Adicionar do catálogo
+    const btnCatalog = document.createElement('button');
+    btnCatalog.type = 'button';
+    btnCatalog.className = 'btn-add-from-catalog';
+    btnCatalog.textContent = '📋 Adicionar do Catálogo';
+    btnCatalog.addEventListener('click', function(e) {
+        e.preventDefault();
+        openCatalog();
+    });
+    body.appendChild(btnCatalog);
+    
+    // Seção: Criar exercício custom
+    const titleCustom = document.createElement('div');
+    titleCustom.className = 'editor-section-title';
+    titleCustom.textContent = 'Criar Exercício';
+    body.appendChild(titleCustom);
+    
+    const form = document.createElement('div');
+    form.className = 'custom-exercise-form';
+    
+    const inputName = document.createElement('input');
+    inputName.type = 'text';
+    inputName.className = 'custom-input';
+    inputName.id = 'custom-ex-name';
+    inputName.placeholder = 'Nome do exercício';
+    inputName.maxLength = 60;
+    
+    const inputSeries = document.createElement('input');
+    inputSeries.type = 'text';
+    inputSeries.className = 'custom-input';
+    inputSeries.id = 'custom-ex-series';
+    inputSeries.placeholder = 'Séries (ex: 3x 10-12 rep)';
+    inputSeries.maxLength = 30;
+    
+    const inputYt = document.createElement('input');
+    inputYt.type = 'text';
+    inputYt.className = 'custom-input';
+    inputYt.id = 'custom-ex-yt';
+    inputYt.placeholder = 'Link YouTube (opcional)';
+    
+    const btnAdd = document.createElement('button');
+    btnAdd.type = 'button';
+    btnAdd.className = 'btn-add-custom';
+    btnAdd.textContent = '+ Adicionar Exercício';
+    btnAdd.addEventListener('click', function(e) {
+        e.preventDefault();
+        addCustomExercise();
+    });
+    
+    form.appendChild(inputName);
+    form.appendChild(inputSeries);
+    form.appendChild(inputYt);
+    form.appendChild(btnAdd);
+    body.appendChild(form);
+    
+    // Botão: Restaurar padrão
+    const btnReset = document.createElement('button');
+    btnReset.type = 'button';
+    btnReset.className = 'btn-reset-defaults';
+    btnReset.textContent = '↩ Restaurar treino padrão';
+    btnReset.addEventListener('click', function(e) {
+        e.preventDefault();
+        editorWorkout = TREINOS[currentTab].map(ex => ({
+            id: ex.id, name: ex.name, series: ex.series, yt_id: ex.yt_id || ''
+        }));
+        renderEditorList();
+    });
+    body.appendChild(btnReset);
+}
+
+function addCustomExercise() {
+    const nameInput = document.getElementById('custom-ex-name');
+    const seriesInput = document.getElementById('custom-ex-series');
+    const ytInput = document.getElementById('custom-ex-yt');
+    
+    const name = nameInput.value.trim();
+    if (!name) {
+        nameInput.focus();
+        return;
+    }
+    
+    const series = seriesInput.value.trim() || '3x 10-12 rep';
+    const ytId = extractYouTubeId(ytInput.value);
+    
+    editorWorkout.push({
+        id: generateExerciseId(),
+        name: name,
+        series: series,
+        yt_id: ytId
+    });
+    
+    renderEditorList();
+    
+    // Scroll para o final
+    const body = document.getElementById('editor-body');
+    body.scrollTop = body.scrollHeight;
+}
+
+function saveEditor() {
+    // Inicializa customTreinos se não existe
+    if (!customTreinos) {
+        customTreinos = {
+            'A': TREINOS.A.map(ex => ({ id: ex.id, name: ex.name, series: ex.series, yt_id: ex.yt_id || '' })),
+            'B': TREINOS.B.map(ex => ({ id: ex.id, name: ex.name, series: ex.series, yt_id: ex.yt_id || '' })),
+            'C': TREINOS.C.map(ex => ({ id: ex.id, name: ex.name, series: ex.series, yt_id: ex.yt_id || '' }))
+        };
+    }
+    
+    customTreinos[currentTab] = editorWorkout.map(ex => ({
+        id: ex.id,
+        name: ex.name,
+        series: ex.series,
+        yt_id: ex.yt_id || ''
+    }));
+    
+    Storage.set('custom_treinos', customTreinos);
+    closeEditor();
+    renderExercises(currentTab);
+    showDialog('✅', 'Treino salvo!', 'Seu Treino ' + currentTab + ' foi atualizado com ' + editorWorkout.length + ' exercícios.');
+}
+
+// ============================================
+// MÓDULO: Editor de YouTube Link
+// ============================================
+
+function openYtEditor(index) {
+    editingYtExerciseIndex = index;
+    const ex = editorWorkout[index];
+    document.getElementById('yt-dialog-title').textContent = ex.name;
+    const input = document.getElementById('yt-link-input');
+    input.value = ex.yt_id ? 'https://www.youtube.com/watch?v=' + ex.yt_id : '';
+    document.getElementById('yt-dialog').showModal();
+    input.focus();
+}
+
+function saveYtLink() {
+    const input = document.getElementById('yt-link-input');
+    const ytId = extractYouTubeId(input.value);
+    
+    if (editingYtExerciseIndex >= 0 && editingYtExerciseIndex < editorWorkout.length) {
+        editorWorkout[editingYtExerciseIndex].yt_id = ytId;
+    }
+    
+    document.getElementById('yt-dialog').close();
+    renderEditorList();
+}
+
+function closeYtDialog() {
+    document.getElementById('yt-dialog').close();
+}
+
+// ============================================
+// MÓDULO: Catálogo de Exercícios
+// ============================================
+
+function openCatalog() {
+    catalogSelectedGroup = 'Todos';
+    document.getElementById('catalog-search').value = '';
+    renderCatalogGroups();
+    renderCatalogList();
+    document.getElementById('catalog-dialog').showModal();
+    document.getElementById('catalog-search').focus();
+}
+
+function closeCatalog() {
+    document.getElementById('catalog-dialog').close();
+}
+
+function renderCatalogGroups() {
+    const container = document.getElementById('catalog-groups');
+    container.innerHTML = '';
+    
+    CATALOG_GROUPS.forEach(function(group) {
+        const pill = document.createElement('button');
+        pill.className = 'group-pill' + (group === catalogSelectedGroup ? ' active' : '');
+        pill.textContent = group;
+        pill.addEventListener('click', function() {
+            catalogSelectedGroup = group;
+            renderCatalogGroups();
+            renderCatalogList();
+        });
+        container.appendChild(pill);
+    });
+}
+
+function renderCatalogList() {
+    const container = document.getElementById('catalog-list');
+    const searchQuery = document.getElementById('catalog-search').value.toLowerCase().trim();
+    container.innerHTML = '';
+    
+    // Nomes dos exercícios já no editor
+    const addedNames = new Set(editorWorkout.map(ex => ex.name.toLowerCase()));
+    
+    let filtered = EXERCISE_CATALOG;
+    
+    // Filtrar por grupo
+    if (catalogSelectedGroup !== 'Todos') {
+        filtered = filtered.filter(ex => ex.group === catalogSelectedGroup);
+    }
+    
+    // Filtrar por busca
+    if (searchQuery) {
+        filtered = filtered.filter(ex => ex.name.toLowerCase().includes(searchQuery));
+    }
+    
+    if (filtered.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'catalog-empty';
+        empty.textContent = 'Nenhum exercício encontrado.';
+        container.appendChild(empty);
+        return;
+    }
+    
+    filtered.forEach(function(catalogEx) {
+        const isAdded = addedNames.has(catalogEx.name.toLowerCase());
+        const item = document.createElement('div');
+        item.className = 'catalog-item' + (isAdded ? ' already-added' : '');
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'catalog-item-name';
+        nameSpan.textContent = catalogEx.name;
+        
+        const groupSpan = document.createElement('span');
+        groupSpan.className = 'catalog-item-group';
+        groupSpan.textContent = catalogEx.group;
+        
+        item.appendChild(nameSpan);
+        item.appendChild(groupSpan);
+        
+        if (!isAdded) {
+            item.addEventListener('click', function() {
+                addFromCatalog(catalogEx);
+            });
+        }
+        
+        container.appendChild(item);
+    });
+}
+
+function addFromCatalog(catalogEx) {
+    editorWorkout.push({
+        id: generateExerciseId(),
+        name: catalogEx.name,
+        series: '3x 10-12 rep',
+        yt_id: ''
+    });
+    
+    // Re-renderiza catálogo para marcar como adicionado
+    renderCatalogList();
+    // Re-renderiza editor em background
+    renderEditorList();
+    // Fecha o catálogo automaticamente para o usuário ver o exercício no editor e poder editar
+    closeCatalog();
+}
+
+// ============================================
+// MÓDULO: Inicialização
+// ============================================
+
+function initApp() {
+    checkDayReset();
+    updateStatsUI();
+    updateTimerDisplay();
+    renderExercises('A');
+    
+    // Marca preset padrão
+    setTimerPreset(60);
+    
+    // Event listeners dos presets
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            setTimerPreset(parseInt(this.dataset.seconds));
+        });
+    });
+    
+    // Event listeners dos tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            switchTab(this.dataset.tab);
+        });
+    });
+    
+    // Event listener do timer
+    document.getElementById('btn-start').addEventListener('click', toggleTimer);
+    document.getElementById('btn-reset').addEventListener('click', resetTimer);
+    
+    // Dialog close buttons
+    document.getElementById('dialog-close-btn').addEventListener('click', closeDialog);
+    document.getElementById('history-close-btn').addEventListener('click', closeHistoryDialog);
+    
+    // Fecha dialog ao clicar no backdrop
+    document.getElementById('app-dialog').addEventListener('click', function(e) {
+        if (e.target === this) closeDialog();
+    });
+    document.getElementById('history-dialog').addEventListener('click', function(e) {
+        if (e.target === this) closeHistoryDialog();
+    });
+    
+    // Editor events
+    document.getElementById('btn-edit-workout').addEventListener('click', function(e) { e.preventDefault(); openEditor(); });
+    document.getElementById('btn-close-editor').addEventListener('click', function(e) { e.preventDefault(); closeEditor(); });
+    document.getElementById('editor-cancel-btn').addEventListener('click', function(e) { e.preventDefault(); closeEditor(); });
+    document.getElementById('editor-save-btn').addEventListener('click', function(e) { e.preventDefault(); saveEditor(); });
+    document.getElementById('editor-dialog').addEventListener('click', function(e) {
+        if (e.target === this) { e.preventDefault(); closeEditor(); }
+    });
+    
+    // Catalog events
+    document.getElementById('catalog-close-btn').addEventListener('click', function(e) { e.preventDefault(); closeCatalog(); });
+    document.getElementById('catalog-search').addEventListener('input', renderCatalogList);
+    document.getElementById('catalog-dialog').addEventListener('click', function(e) {
+        if (e.target === this) { e.preventDefault(); closeCatalog(); }
+    });
+    
+    // YouTube link editor events
+    document.getElementById('yt-save-btn').addEventListener('click', function(e) { e.preventDefault(); saveYtLink(); });
+    document.getElementById('yt-cancel-btn').addEventListener('click', function(e) { e.preventDefault(); closeYtDialog(); });
+    document.getElementById('yt-dialog').addEventListener('click', function(e) {
+        if (e.target === this) { e.preventDefault(); closeYtDialog(); }
+    });
+}
+
+// Inicia quando o DOM estiver pronto
+document.addEventListener('DOMContentLoaded', initApp);
+
+// ============================================
+// MÓDULO: Instalação PWA Customizada
+// ============================================
+let deferredPrompt;
+const installBanner = document.getElementById('install-banner');
+const btnInstall = document.getElementById('btn-install');
+const btnInstallCancel = document.getElementById('btn-install-cancel');
+
+// Intercepta o evento de instalação padrão
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Previne o mini-infobar padrão de aparecer no mobile
+    e.preventDefault();
+    // Salva o evento para acioná-lo depois
+    deferredPrompt = e;
+    
+    // Mostra nosso banner customizado bonitão após 2 segundos
+    setTimeout(() => {
+        installBanner.classList.add('show');
+    }, 2000);
+});
+
+// Ação de instalar
+btnInstall.addEventListener('click', async () => {
+    if (deferredPrompt) {
+        // Esconde o banner
+        installBanner.classList.remove('show');
+        // Aciona o prompt nativo
+        deferredPrompt.prompt();
+        // Espera pela resposta do usuário
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            console.log('Usuário aceitou a instalação do PWA');
+        } else {
+            console.log('Usuário recusou a instalação do PWA');
+        }
+        deferredPrompt = null;
+    }
+});
+
+// Ação de cancelar
+btnInstallCancel.addEventListener('click', () => {
+    installBanner.classList.remove('show');
+});
+
+// Oculta se o app foi instalado com sucesso
+window.addEventListener('appinstalled', () => {
+    installBanner.classList.remove('show');
+    deferredPrompt = null;
+    console.log('PWA instalado');
+});

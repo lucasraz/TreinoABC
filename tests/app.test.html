@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Treino ABC — Testes</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #111; color: #eee; padding: 20px; }
+        h1 { color: #facc15; }
+        .test { padding: 8px 12px; margin: 4px 0; border-radius: 6px; font-size: 0.9rem; }
+        .pass { background: rgba(34,197,94,0.15); border-left: 3px solid #22c55e; }
+        .fail { background: rgba(239,68,68,0.15); border-left: 3px solid #ef4444; }
+        .summary { margin-top: 20px; padding: 12px; border-radius: 8px; font-weight: bold; }
+        .summary.all-pass { background: rgba(34,197,94,0.2); color: #22c55e; }
+        .summary.has-fail { background: rgba(239,68,68,0.2); color: #ef4444; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Testes — Treino ABC</h1>
+    <div id="results"></div>
+    <div id="summary"></div>
+
+    <!-- Carrega apenas os dados e funções puras que queremos testar -->
+    <script src="../data/exercises.js"></script>
+    <script src="../data/exercise_catalog.js"></script>
+    <script>
+        // ============================================
+        // Mini Test Runner
+        // ============================================
+        let passed = 0;
+        let failed = 0;
+        const results = document.getElementById('results');
+
+        function assert(condition, testName) {
+            const div = document.createElement('div');
+            div.className = 'test ' + (condition ? 'pass' : 'fail');
+            div.textContent = (condition ? '✅' : '❌') + ' ' + testName;
+            results.appendChild(div);
+            if (condition) passed++;
+            else failed++;
+        }
+
+        function assertEqual(actual, expected, testName) {
+            const condition = actual === expected;
+            const div = document.createElement('div');
+            div.className = 'test ' + (condition ? 'pass' : 'fail');
+            div.textContent = (condition ? '✅' : '❌') + ' ' + testName;
+            if (!condition) {
+                div.textContent += ' (esperado: ' + JSON.stringify(expected) + ', recebido: ' + JSON.stringify(actual) + ')';
+            }
+            results.appendChild(div);
+            if (condition) passed++;
+            else failed++;
+        }
+
+        // ============================================
+        // Mock localStorage
+        // ============================================
+        const mockStorage = {};
+        const MockStorage = {
+            get(key, fallback) {
+                return mockStorage[key] !== undefined ? JSON.parse(JSON.stringify(mockStorage[key])) : fallback;
+            },
+            set(key, value) {
+                mockStorage[key] = JSON.parse(JSON.stringify(value));
+            },
+            clear() {
+                Object.keys(mockStorage).forEach(k => delete mockStorage[k]);
+            }
+        };
+
+        // ============================================
+        // Funções replicadas para teste (sem DOM)
+        // ============================================
+
+        function getTodayDate() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        function formatDate(dateStr) {
+            const [y, m, d] = dateStr.split('-');
+            return d + '/' + m + '/' + y;
+        }
+
+        function calcStreak(statsData, today) {
+            if (statsData.lastDate === today) {
+                return { changed: false, stats: statsData };
+            }
+            
+            const newStats = { ...statsData };
+            
+            if (newStats.lastDate) {
+                const last = new Date(newStats.lastDate);
+                const current = new Date(today);
+                const diffTime = Math.abs(current - last);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays === 1) {
+                    newStats.streak += 1;
+                } else {
+                    newStats.streak = 1;
+                }
+            } else {
+                newStats.streak = 1;
+            }
+            
+            newStats.totalDays += 1;
+            newStats.lastDate = today;
+            
+            return { changed: true, stats: newStats };
+        }
+
+        function calcTimerDisplay(seconds) {
+            const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            return m + ':' + s;
+        }
+
+        function shouldResetChecks(lastCheckDate, today) {
+            return lastCheckDate !== today;
+        }
+
+        function validateCarga(value) {
+            const num = parseFloat(value);
+            return !isNaN(num) && num >= 0;
+        }
+
+        function extractYouTubeId(input) {
+            if (!input) return '';
+            input = input.trim();
+            if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+            try {
+                const url = new URL(input);
+                if (url.hostname.includes('youtube.com')) {
+                    return url.searchParams.get('v') || '';
+                }
+                if (url.hostname.includes('youtu.be')) {
+                    return url.pathname.slice(1).split('/')[0] || '';
+                }
+            } catch { /* not a URL */ }
+            return '';
+        }
+
+        function generateExerciseId() {
+            return 'custom_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 4);
+        }
+
+        // ============================================
+        // TESTES: Dados dos Exercícios
+        // ============================================
+
+        assert(TREINOS.A.length === 7, 'Treino A tem 7 exercícios');
+        assert(TREINOS.B.length === 7, 'Treino B tem 7 exercícios');
+        assert(TREINOS.C.length === 7, 'Treino C tem 7 exercícios');
+
+        assert(TREINOS.A[0].id === 'a1', 'Primeiro exercício do Treino A é a1');
+        assert(TREINOS.A[0].name === 'Supino Reto', 'Primeiro exercício é Supino Reto');
+
+        // IDs únicos
+        const allIds = [...TREINOS.A, ...TREINOS.B, ...TREINOS.C].map(e => e.id);
+        const uniqueIds = new Set(allIds);
+        assert(allIds.length === uniqueIds.size, 'Todos os IDs de exercícios são únicos');
+
+        // Todos têm yt_id
+        const allExercises = [...TREINOS.A, ...TREINOS.B, ...TREINOS.C];
+        const allHaveYtId = allExercises.every(e => e.yt_id && e.yt_id.length === 11);
+        assert(allHaveYtId, 'Todos os exercícios têm yt_id com 11 caracteres');
+
+        // Labels
+        assert(TREINO_LABELS.A !== undefined, 'Label do Treino A existe');
+        assert(TREINO_LABELS.B !== undefined, 'Label do Treino B existe');
+        assert(TREINO_LABELS.C !== undefined, 'Label do Treino C existe');
+
+        // ============================================
+        // TESTES: Timer
+        // ============================================
+
+        assertEqual(calcTimerDisplay(60), '01:00', 'Timer 60s mostra 01:00');
+        assertEqual(calcTimerDisplay(0), '00:00', 'Timer 0s mostra 00:00');
+        assertEqual(calcTimerDisplay(90), '01:30', 'Timer 90s mostra 01:30');
+        assertEqual(calcTimerDisplay(120), '02:00', 'Timer 120s mostra 02:00');
+        assertEqual(calcTimerDisplay(5), '00:05', 'Timer 5s mostra 00:05');
+        assertEqual(calcTimerDisplay(30), '00:30', 'Timer 30s mostra 00:30');
+
+        // ============================================
+        // TESTES: Streak
+        // ============================================
+
+        // Primeiro treino
+        const stats1 = calcStreak({ lastDate: null, totalDays: 0, streak: 0 }, '2026-04-20');
+        assert(stats1.changed === true, 'Primeiro treino é registrado');
+        assertEqual(stats1.stats.streak, 1, 'Primeiro treino inicia streak em 1');
+        assertEqual(stats1.stats.totalDays, 1, 'Total de dias é 1 após primeiro treino');
+
+        // Treino consecutivo (dia seguinte)
+        const stats2 = calcStreak({ lastDate: '2026-04-20', totalDays: 1, streak: 1 }, '2026-04-21');
+        assertEqual(stats2.stats.streak, 2, 'Dia consecutivo incrementa streak para 2');
+        assertEqual(stats2.stats.totalDays, 2, 'Total de dias é 2');
+
+        // Treino no mesmo dia (não deve contar)
+        const stats3 = calcStreak({ lastDate: '2026-04-20', totalDays: 1, streak: 1 }, '2026-04-20');
+        assert(stats3.changed === false, 'Treino no mesmo dia não é registrado');
+
+        // Quebra de streak (pulou um dia)
+        const stats4 = calcStreak({ lastDate: '2026-04-20', totalDays: 5, streak: 5 }, '2026-04-22');
+        assertEqual(stats4.stats.streak, 1, 'Pular um dia reseta streak para 1');
+        assertEqual(stats4.stats.totalDays, 6, 'Total de dias continua incrementando');
+
+        // Streak longo
+        let longStats = { lastDate: '2026-04-01', totalDays: 1, streak: 1 };
+        for (let day = 2; day <= 10; day++) {
+            const dateStr = '2026-04-' + day.toString().padStart(2, '0');
+            const result = calcStreak(longStats, dateStr);
+            longStats = result.stats;
+        }
+        assertEqual(longStats.streak, 10, 'Streak de 10 dias consecutivos funciona');
+        assertEqual(longStats.totalDays, 10, 'Total de 10 dias funciona');
+
+        // ============================================
+        // TESTES: Auto-reset por dia
+        // ============================================
+
+        assert(shouldResetChecks(null, '2026-04-20') === true, 'Primeiro uso reseta checks');
+        assert(shouldResetChecks('2026-04-19', '2026-04-20') === true, 'Novo dia reseta checks');
+        assert(shouldResetChecks('2026-04-20', '2026-04-20') === false, 'Mesmo dia não reseta checks');
+
+        // ============================================
+        // TESTES: Validação de carga
+        // ============================================
+
+        assert(validateCarga('50') === true, 'Carga 50 é válida');
+        assert(validateCarga('0') === true, 'Carga 0 é válida');
+        assert(validateCarga('22.5') === true, 'Carga 22.5 é válida');
+        assert(validateCarga('abc') === false, 'Carga "abc" é inválida');
+        assert(validateCarga('') === false, 'Carga vazia é inválida');
+        assert(validateCarga('-5') === false, 'Carga negativa é inválida');
+
+        // ============================================
+        // TESTES: Formatação de data
+        // ============================================
+
+        assertEqual(formatDate('2026-04-20'), '20/04/2026', 'Formata data corretamente');
+        assertEqual(formatDate('2026-01-01'), '01/01/2026', 'Formata data com zeros');
+
+        // ============================================
+        // TESTES: Storage Mock
+        // ============================================
+
+        MockStorage.clear();
+        assertEqual(MockStorage.get('inexistente', 42), 42, 'Storage retorna fallback para chave inexistente');
+        MockStorage.set('teste', { a: 1 });
+        assertEqual(MockStorage.get('teste', null).a, 1, 'Storage salva e recupera objetos');
+        MockStorage.clear();
+        assertEqual(MockStorage.get('teste', null), null, 'Storage.clear limpa tudo');
+
+        // ============================================
+        // TESTES: Catálogo de Exercícios
+        // ============================================
+
+        assert(EXERCISE_CATALOG.length >= 120, 'Catálogo tem 120+ exercícios (' + EXERCISE_CATALOG.length + ')');
+        assert(CATALOG_GROUPS.length >= 10, 'Catálogo tem 10+ grupos musculares');
+        assert(CATALOG_GROUPS[0] === 'Todos', 'Primeiro grupo é "Todos"');
+
+        // Todos os exercícios do catálogo têm name e group
+        const allCatalogValid = EXERCISE_CATALOG.every(e => e.name && e.group);
+        assert(allCatalogValid, 'Todos os exercícios do catálogo têm name e group');
+
+        // Grupos do catálogo incluem os principais
+        assert(CATALOG_GROUPS.includes('Peito'), 'Catálogo inclui grupo Peito');
+        assert(CATALOG_GROUPS.includes('Costas'), 'Catálogo inclui grupo Costas');
+        assert(CATALOG_GROUPS.includes('Bíceps'), 'Catálogo inclui grupo Bíceps');
+        assert(CATALOG_GROUPS.includes('Tríceps'), 'Catálogo inclui grupo Tríceps');
+
+        // Filtragem por grupo funciona
+        const peitoExercises = EXERCISE_CATALOG.filter(e => e.group === 'Peito');
+        assert(peitoExercises.length >= 10, 'Grupo Peito tem 10+ exercícios (' + peitoExercises.length + ')');
+
+        // ============================================
+        // TESTES: Extração de YouTube ID
+        // ============================================
+
+        assertEqual(extractYouTubeId('dQw4w9WgXcQ'), 'dQw4w9WgXcQ', 'Extrai ID direto de 11 chars');
+        assertEqual(extractYouTubeId('https://www.youtube.com/watch?v=dQw4w9WgXcQ'), 'dQw4w9WgXcQ', 'Extrai ID de URL completa');
+        assertEqual(extractYouTubeId('https://youtu.be/dQw4w9WgXcQ'), 'dQw4w9WgXcQ', 'Extrai ID de URL curta (youtu.be)');
+        assertEqual(extractYouTubeId('https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=30'), 'dQw4w9WgXcQ', 'Extrai ID de URL com parâmetros extras');
+        assertEqual(extractYouTubeId(''), '', 'Input vazio retorna string vazia');
+        assertEqual(extractYouTubeId(null), '', 'Input null retorna string vazia');
+        assertEqual(extractYouTubeId('texto inválido'), '', 'Texto inválido retorna string vazia');
+
+        // ============================================
+        // TESTES: Geração de ID customizado
+        // ============================================
+
+        const id1 = generateExerciseId();
+        const id2 = generateExerciseId();
+        assert(id1.startsWith('custom_'), 'ID customizado começa com "custom_"');
+        assert(id1 !== id2, 'IDs customizados são únicos');
+        assert(id1.length > 10, 'ID customizado tem comprimento adequado');
+
+        // ============================================
+        // Resumo
+        // ============================================
+
+        const summary = document.getElementById('summary');
+        summary.className = 'summary ' + (failed === 0 ? 'all-pass' : 'has-fail');
+        summary.textContent = (failed === 0 ? '✅' : '❌') + ' ' + passed + ' passaram, ' + failed + ' falharam de ' + (passed + failed) + ' testes';
+    </script>
+</body>
+</html>

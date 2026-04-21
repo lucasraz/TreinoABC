@@ -1599,10 +1599,17 @@ function removeCustomTab(tab) {
 // ============================================
 
 function openSettings() {
+    const key = Storage.get('openai_api_key', '');
+    const input = document.getElementById('input-openai-key');
+    if (input) input.value = key;
     document.getElementById('settings-dialog').showModal();
 }
 
 function closeSettings() {
+    const keyInput = document.getElementById('input-openai-key');
+    if (keyInput) {
+        Storage.set('openai_api_key', keyInput.value.trim());
+    }
     document.getElementById('settings-dialog').close();
 }
 
@@ -1676,6 +1683,134 @@ function closeGuide() {
     if (dialog) dialog.close();
 }
 
+// ============================================
+// MÓDULO: AI Coach (Lógica)
+// ============================================
+
+let aiGeneratedWorkout = null;
+
+function openAICoach() {
+    document.getElementById('ai-coach-dialog').showModal();
+}
+
+function closeAICoach() {
+    document.getElementById('ai-coach-dialog').close();
+    // Limpa estado
+    aiGeneratedWorkout = null;
+    document.getElementById('ai-preview').style.display = 'none';
+    document.getElementById('ai-apply-btn').style.display = 'none';
+    document.getElementById('ai-status').textContent = '';
+}
+
+async function generateWorkoutWithAI() {
+    const key = Storage.get('openai_api_key', '');
+    if (!key) {
+        showDialog('⚠️', 'Chave Faltando', 'Por favor, configure sua OpenAI API Key nas configurações primeiro.');
+        return;
+    }
+
+    const userPrompt = document.getElementById('ai-user-prompt').value.trim();
+    if (!userPrompt) return;
+
+    const status = document.getElementById('ai-status');
+    const genBtn = document.getElementById('ai-generate-btn');
+    const preview = document.getElementById('ai-preview');
+    
+    status.textContent = "🤖 O Coach está pensando...";
+    genBtn.disabled = true;
+    preview.style.display = 'none';
+
+    try {
+        const catalogText = EXERCISE_CATALOG.map(e => `${e.name} (${e.group})`).join(', ');
+        
+        const systemPrompt = `Você é um Personal Trainer de elite. Monte um treino baseado no pedido do usuário.
+        IMPORTANTE: Use APENAS exercícios deste catálogo: ${catalogText}.
+        Responda EXCLUSIVAMENTE em formato JSON puro, sem blocos de código markdown, seguindo exatamente este modelo:
+        {
+          "A": [{ "name": "Nome do Exercício", "sets": 3, "reps": "12" }],
+          "B": [...]
+        }`;
+
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${key}`
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userPrompt }
+                ],
+                temperature: 0.7
+            })
+        });
+
+        const data = await response.json();
+        if (data.error) throw new Error(data.error.message);
+
+        // Limpa possíveis marcações de markdown se a IA ignorar o comando
+        let content = data.choices[0].message.content.trim();
+        if (content.startsWith('```')) {
+            content = content.replace(/```json|```/g, '').trim();
+        }
+
+        aiGeneratedWorkout = JSON.parse(content);
+        
+        // Exibir preview simples
+        status.textContent = "✅ Treino gerado com sucesso!";
+        let previewHtml = '<strong>Preview do Treino:</strong><br><br>';
+        for (const tab in aiGeneratedWorkout) {
+            previewHtml += `<strong>Treino ${tab}:</strong><br>`;
+            aiGeneratedWorkout[tab].forEach(ex => {
+                previewHtml += `- ${ex.name}: ${ex.sets}x${ex.reps}<br>`;
+            });
+            previewHtml += '<br>';
+        }
+        preview.innerHTML = previewHtml;
+        preview.style.display = 'block';
+        document.getElementById('ai-apply-btn').style.display = 'block';
+
+    } catch (err) {
+        status.textContent = "❌ Erro: " + err.message;
+        console.error(err);
+    } finally {
+        genBtn.disabled = false;
+    }
+}
+
+function applyAIWorkout() {
+    if (!aiGeneratedWorkout) return;
+    
+    if (confirm("Isso substituirá sua divisão de treino atual. Deseja continuar?")) {
+        // Mapeia exercícios da IA para o formato do app (adicionando IDs e Groups)
+        const finalWorkout = {};
+        for (const tab in aiGeneratedWorkout) {
+            finalWorkout[tab] = aiGeneratedWorkout[tab].map(ex => {
+                const catalogEx = EXERCISE_CATALOG.find(c => c.name === ex.name);
+                return {
+                    id: generateExerciseId(),
+                    name: ex.name,
+                    group: catalogEx ? catalogEx.group : 'Outros',
+                    sets: ex.sets || 3,
+                    reps: ex.reps || '12',
+                    yt_id: ''
+                };
+            });
+        }
+        
+        customTreinos = finalWorkout;
+        Storage.set('custom_treinos', customTreinos);
+        Storage.set('split_type', 'CUSTOM');
+        
+        renderTabs();
+        switchTab(Object.keys(finalWorkout)[0]);
+        closeAICoach();
+        showDialog('🦾', 'Treino Aplicado', 'Seu novo treino gerado por IA está pronto!');
+    }
+}
+
 // Inicialização de eventos globais
 document.addEventListener('DOMContentLoaded', function() {
     const helpBtn = document.getElementById('btn-help');
@@ -1690,4 +1825,17 @@ document.addEventListener('DOMContentLoaded', function() {
             if (e.target === this) closeGuide();
         });
     }
+
+    // AI Coach Event Listeners
+    const aiBtn = document.getElementById('btn-ai-coach');
+    if (aiBtn) aiBtn.addEventListener('click', openAICoach);
+    
+    const aiCloseBtn = document.getElementById('ai-close-btn');
+    if (aiCloseBtn) aiCloseBtn.addEventListener('click', closeAICoach);
+    
+    const aiGenBtn = document.getElementById('ai-generate-btn');
+    if (aiGenBtn) aiGenBtn.addEventListener('click', generateWorkoutWithAI);
+    
+    const aiApplyBtn = document.getElementById('ai-apply-btn');
+    if (aiApplyBtn) aiApplyBtn.addEventListener('click', applyAIWorkout);
 });

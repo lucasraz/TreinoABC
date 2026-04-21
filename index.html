@@ -76,10 +76,13 @@
 
     <!-- Action Bar -->
     <div class="action-bar">
-        <button class="btn-edit-workout" id="btn-edit-workout">
-            <span>✏️ Editar Treino</span>
-        </button>
-        <button class="btn-settings-shortcut" id="btn-settings" title="Backup e Configurações">
+            <button class="action-btn" id="btn-edit">
+                <span>✏️</span> Editar
+            </button>
+            <button class="action-btn btn-ai-coach" id="btn-ai-coach">
+                <span>🤖</span> AI Coach
+            </button>
+            <button class="btn-settings-shortcut" id="btn-settings" title="Backup e Configurações">
             <span>💾</span>
         </button>
     </div>
@@ -205,6 +208,17 @@
                     <p class="settings-help">Usado para calcular a estimativa de gasto calórico.</p>
                 </div>
                 
+                <div class="settings-group">
+                    <h4>Inteligência Artificial (Opcional)</h4>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px;">
+                        Use sua própria chave da OpenAI para gerar treinos. A chave fica salva apenas no seu dispositivo.
+                    </p>
+                    <div class="setting-item">
+                        <label>OpenAI API Key:</label>
+                        <input type="password" id="input-openai-key" placeholder="sk-...">
+                    </div>
+                </div>
+                
                 <div class="settings-actions">
                     <button id="btn-export-backup" class="btn-dialog-primary">
                         <span>📥 Baixar Backup (.json)</span>
@@ -220,7 +234,7 @@
             </div>
 
             <div class="dialog-footer">
-                <button id="btn-close-settings" class="btn-dialog-secondary">Fechar</button>
+                <button id="btn-close-settings" class="dialog-btn">Salvar e Fechar</button>
             </div>
         </div>
     </dialog>
@@ -257,6 +271,25 @@
             </p>
         </div>
         <button id="guide-close-btn" class="dialog-btn">Entendi!</button>
+    </dialog>
+
+    <!-- Modal: AI Coach -->
+    <dialog id="ai-coach-dialog" class="app-dialog">
+        <div class="dialog-icon">🤖</div>
+        <h3 class="dialog-title">A-FIT AI Coach</h3>
+        <div id="ai-coach-content" class="dialog-message scrollable-content">
+            <p>Peça para eu montar um treino sob medida para você usando nosso catálogo de exercícios.</p>
+            <div class="ai-prompt-container">
+                <textarea id="ai-user-prompt" placeholder="Ex: Monte um treino ABC focado em pernas e ombros para nível iniciante..."></textarea>
+            </div>
+            <div id="ai-status" class="ai-status"></div>
+            <div id="ai-preview" class="ai-preview" style="display: none;"></div>
+        </div>
+        <div class="ai-actions">
+            <button id="ai-generate-btn" class="dialog-btn btn-primary">Gerar Treino</button>
+            <button id="ai-apply-btn" class="dialog-btn" style="display: none; background: var(--success);">Aplicar no App</button>
+            <button id="ai-close-btn" class="dialog-btn btn-muted">Cancelar</button>
+        </div>
     </dialog>
 
     <!-- Scripts -->

@@ -98,17 +98,26 @@ h1 {
     opacity: 0.9;
 }
 
-.session-metrics strong, .session-metrics-inline strong {
-    color: var(--accent-color);
-}
-
 .session-metrics-inline {
     display: flex;
     justify-content: center;
     gap: 16px;
-    font-size: 0.8rem;
-    margin-top: 8px;
+    font-size: 0.85rem;
+    margin-top: 10px;
     color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.03);
+    padding: 6px 16px;
+    border-radius: 20px;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.session-metrics-inline strong {
+    color: var(--accent-color);
+    text-shadow: 0 0 10px rgba(250, 204, 21, 0.5);
+    font-weight: 800;
 }
 
 .stats-container span {
@@ -665,18 +674,18 @@ h1 {
 
 /* --- Custom Dialog (replaces alert) --- */
 .app-dialog {
-    border: 1px solid var(--card-border);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-lg);
-    background: var(--card-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
+    background: rgba(20, 20, 25, 0.85);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
     color: var(--text-main);
     padding: 28px 24px 20px;
-    max-width: 340px;
+    max-width: 360px;
     width: 90%;
     margin: auto;
     inset: 0;
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
     animation: dialog-enter 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
@@ -1118,23 +1127,28 @@ h1 {
 /* --- Add from Catalog --- */
 .btn-add-from-catalog {
     width: 100%;
-    padding: 12px;
+    padding: 14px;
     background: rgba(255, 255, 255, 0.04);
-    border: 2px dashed var(--card-border);
+    border: 2px dashed rgba(255, 255, 255, 0.15);
     border-radius: var(--radius-sm);
     color: var(--text-muted);
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     font-weight: 600;
     font-family: 'Inter', sans-serif;
     cursor: pointer;
     transition: all var(--transition-fast);
-    margin-top: 8px;
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .btn-add-from-catalog:hover {
     border-color: var(--accent-color);
     color: var(--accent-color);
-    background: rgba(250, 204, 21, 0.05);
+    background: rgba(250, 204, 21, 0.08);
+    transform: translateY(-2px);
 }
 
 /* --- Custom Exercise Form --- */
@@ -1151,13 +1165,20 @@ h1 {
 
 .custom-input {
     width: 100%;
-    padding: 10px 12px;
+    padding: 12px 14px;
     border-radius: var(--radius-sm);
-    border: 1px solid var(--card-border);
-    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.4);
     color: var(--text-main);
     font-family: 'Inter', sans-serif;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
+    transition: all var(--transition-fast);
+}
+
+.custom-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 15px rgba(250, 204, 21, 0.15);
 }
 
 .custom-input:focus {
@@ -1405,9 +1426,9 @@ h1 {
 /* --- Drag & Drop Reordering --- */
 .drag-handle {
     cursor: grab;
-    padding: 0 12px 0 0;
+    padding: 0 16px 0 0;
     color: var(--text-muted);
-    font-size: 1.2rem;
+    font-size: 1.4rem;
     user-select: none;
     display: flex;
     align-items: center;
@@ -1415,21 +1436,33 @@ h1 {
 }
 
 .drag-handle:hover {
-    color: var(--primary);
+    color: var(--accent-color);
 }
 
 .drag-handle:active {
     cursor: grabbing;
 }
 
-.editor-exercise-item.dragging {
-    opacity: 0.4;
-    background: rgba(79, 172, 254, 0.1);
-    border: 1px dashed var(--primary);
+.editor-exercise-item {
+    display: flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    margin-bottom: 8px;
+    transition: all var(--transition-fast);
 }
 
-.editor-exercise-item.drag-over {
-    border-top: 2px solid var(--primary);
+.editor-exercise-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.editor-exercise-item.dragging {
+    opacity: 0.5;
+    background: rgba(250, 204, 21, 0.1);
+    border: 1px dashed var(--accent-color);
 }
 
 .btn-reset-defaults:hover {

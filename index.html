@@ -67,10 +67,8 @@
         </div>
     </header>
 
-    <nav class="tabs">
-        <button class="tab-btn active" data-tab="A">Treino A</button>
-        <button class="tab-btn" data-tab="B">Treino B</button>
-        <button class="tab-btn" data-tab="C">Treino C</button>
+    <nav class="tabs" id="tabs-nav">
+        <!-- Gerado dinamicamente -->
     </nav>
 
     <!-- Action Bar -->
@@ -180,6 +178,19 @@
                 <p class="settings-description">
                     Proteja seu progresso. Faça backup dos seus treinos customizados, histórico e ofensiva antes de limpar os dados do navegador.
                 </p>
+
+                <div class="settings-group">
+                    <label for="select-split">Divisão de Treino:</label>
+                    <select id="select-split" class="custom-input">
+                        <option value="A">A (Corpo Inteiro)</option>
+                        <option value="AB">AB (Superior / Inferior)</option>
+                        <option value="ABC" selected>ABC (Padrão)</option>
+                        <option value="ABCD">ABCD</option>
+                        <option value="ABCDE">ABCDE</option>
+                        <option value="CUSTOM">Personalizado</option>
+                    </select>
+                    <p class="settings-help">Mudar a divisão pode redefinir seus exercícios customizados.</p>
+                </div>
                 
                 <div class="settings-actions">
                     <button id="btn-export-backup" class="btn-dialog-primary">

@@ -50,7 +50,8 @@ Nenhuma — app 100% client-side com localStorage.
 | `custom_treinos` | Object/null | Treinos customizados (null = usar padrão) |
 
 ## Funcionalidades
-- [x] Treinos A/B/C com tabs
+- [x] Divisões de treino dinâmicas (A, AB, ABC, ABCD, ABCDE)
+- [x] Modo Personalizado (adicionar/remover abas de treino)
 - [x] Timer de descanso configurável (presets 30/60/90/120s)
 - [x] Feedback sonoro no timer (Web Audio API)
 - [x] Salvar carga por exercício (input numérico validado)

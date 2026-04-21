@@ -265,6 +265,18 @@ h1 {
     box-shadow: var(--shadow-glow);
 }
 
+.add-tab-btn {
+    flex: 0 0 44px;
+    font-size: 1.4rem;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--accent-color);
+}
+
+.add-tab-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
 /* --- Action Bar --- */
 .action-bar {
     display: flex;
@@ -702,6 +714,44 @@ h1 {
 .dialog-btn:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+/* --- Settings Groups --- */
+.settings-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.settings-group label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.settings-help {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+    font-style: italic;
+}
+
+.custom-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--card-border);
+    color: var(--text-main);
+    padding: 12px;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.9rem;
+}
+
+.custom-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
 }
 
 /* --- Settings / Backup Specific --- */
@@ -1620,4 +1670,25 @@ h1 {
 @keyframes confetti-fall {
     0% { transform: translateY(0) rotate(0deg); opacity: 1; }
     100% { transform: translateY(400px) rotate(720deg); opacity: 0; }
+}
+.btn-remove-tab {
+    width: 100%;
+    margin-bottom: 20px;
+    padding: 10px;
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-remove-tab:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: var(--danger);
 }

@@ -68,9 +68,8 @@ function isValidHistoryData(data) {
 function isValidCustomTreinos(data) {
     if (data === null) return true; // null é válido (usa padrão)
     if (typeof data !== 'object') return false;
-    return ['A', 'B', 'C'].every(function(tab) {
-        return !data[tab] || Array.isArray(data[tab]);
-    });
+    // Verifica se é um objeto com chaves que contêm arrays de exercícios
+    return Object.values(data).every(val => Array.isArray(val));
 }
 
 // --- Inicialização com validação de schema ---
@@ -88,6 +87,7 @@ let historyData = isValidHistoryData(_rawHistoryData) ? _rawHistoryData : {};
 const _rawCustomTreinos = Storage.get('custom_treinos', null);
 let customTreinos = isValidCustomTreinos(_rawCustomTreinos) ? _rawCustomTreinos : null;
 
+let splitType = Storage.get('split_type', 'ABC');
 let currentTab = 'A';
 
 // Timer state
@@ -325,7 +325,10 @@ function renderExercises(tab) {
     
     // Atualiza label do treino
     const label = document.getElementById('treino-label');
-    if (label) label.textContent = TREINO_LABELS[tab] || '';
+    if (label) {
+        // Se houver labels pré-definidos, usa; senão usa apenas o nome da tab
+        label.textContent = (typeof TREINO_LABELS !== 'undefined' && TREINO_LABELS[tab]) ? TREINO_LABELS[tab] : `Treino ${tab}`;
+    }
 
     const workouts = getActiveWorkouts();
     const exercises = workouts[tab] || [];
@@ -500,12 +503,58 @@ function toggleVideo(exId, ytId) {
 // ============================================
 
 function switchTab(tab) {
+    const workouts = getActiveWorkouts();
+    // Se a tab não existir mais (mudança de divisão), volta para a primeira disponível
+    if (!workouts[tab]) {
+        tab = Object.keys(workouts)[0] || 'A';
+    }
+    
     currentTab = tab;
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     // Encontrar o botão correto pelo data attribute
     const activeBtn = document.querySelector('.tab-btn[data-tab="' + tab + '"]');
     if (activeBtn) activeBtn.classList.add('active');
     renderExercises(tab);
+}
+
+/**
+ * Gera os botões de tab dinamicamente com base nas chaves do treino.
+ */
+function renderTabs() {
+    const nav = document.getElementById('tabs-nav');
+    if (!nav) return;
+    
+    nav.innerHTML = '';
+    const workouts = getActiveWorkouts();
+    const tabs = Object.keys(workouts).sort(); // A, B, C, D...
+    
+    tabs.forEach(tab => {
+        const btn = document.createElement('button');
+        btn.className = 'tab-btn' + (tab === currentTab ? ' active' : '');
+        btn.dataset.tab = tab;
+        btn.textContent = `Treino ${tab}`;
+        btn.addEventListener('click', function() {
+            switchTab(tab);
+        });
+        nav.appendChild(btn);
+    });
+
+    // Se estiver em modo customizado, permite adicionar novas abas
+    if (splitType === 'CUSTOM') {
+        const addBtn = document.createElement('button');
+        addBtn.className = 'tab-btn add-tab-btn';
+        addBtn.textContent = '+';
+        addBtn.title = 'Adicionar novo treino';
+        addBtn.addEventListener('click', function() {
+            addCustomTab();
+        });
+        nav.appendChild(addBtn);
+    }
+
+    // Se a aba atual não existe na nova divisão, reseta para a primeira
+    if (!tabs.includes(currentTab)) {
+        switchTab(tabs[0]);
+    }
 }
 
 // ============================================
@@ -721,6 +770,17 @@ function renderEditorList() {
     titleCurrent.className = 'editor-section-title';
     titleCurrent.textContent = 'Exercícios do Treino ' + currentTab + ' (' + editorWorkout.length + ')';
     body.appendChild(titleCurrent);
+
+    // Botão para remover aba no modo Custom
+    if (splitType === 'CUSTOM') {
+        const removeTabBtn = document.createElement('button');
+        removeTabBtn.className = 'btn-remove-tab';
+        removeTabBtn.textContent = '🗑️ Remover este Treino';
+        removeTabBtn.addEventListener('click', function() {
+            removeCustomTab(currentTab);
+        });
+        body.appendChild(removeTabBtn);
+    }
     
     if (editorWorkout.length === 0) {
         const empty = document.createElement('div');
@@ -1124,28 +1184,22 @@ function initApp() {
         });
     });
     
-    renderExercises('A');
+    renderTabs();
+    renderExercises(currentTab);
     
     // Marca preset padrão
     setTimerPreset(60);
     
-    // Event listeners dos presets
-    document.querySelectorAll('.preset-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            setTimerPreset(parseInt(this.dataset.seconds));
-        });
-    });
+    // Event listeners dos presets (removidos os duplicados que estavam abaixo)
     
-    // Event listeners dos tabs
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            switchTab(this.dataset.tab);
+    // Split selection event
+    const selectSplit = document.getElementById('select-split');
+    if (selectSplit) {
+        selectSplit.value = splitType;
+        selectSplit.addEventListener('change', function() {
+            changeSplit(this.value);
         });
-    });
-    
-    // Event listener do timer
-    document.getElementById('btn-start').addEventListener('click', toggleTimer);
-    document.getElementById('btn-reset').addEventListener('click', resetTimer);
+    }
     
     // Dialog close buttons
     document.getElementById('dialog-close-btn').addEventListener('click', closeDialog);
@@ -1348,6 +1402,98 @@ function handleDragEnd() {
     document.querySelectorAll('.editor-exercise-item').forEach(item => {
         item.classList.remove('drag-over');
     });
+}
+
+// ============================================
+// MÓDULO: Divisão de Treino
+// ============================================
+
+function changeSplit(newSplit) {
+    if (newSplit === splitType) return;
+
+    const confirmMsg = "Mudar a divisão de treino pode reorganizar seus exercícios. Deseja continuar?";
+    if (!confirm(confirmMsg)) {
+        document.getElementById('select-split').value = splitType;
+        return;
+    }
+
+    splitType = newSplit;
+    Storage.set('split_type', splitType);
+
+    // Gera a nova estrutura de treinos
+    const oldWorkouts = getActiveWorkouts();
+    const newWorkouts = {};
+
+    let targetTabs = [];
+    if (newSplit === 'A') targetTabs = ['A'];
+    else if (newSplit === 'AB') targetTabs = ['A', 'B'];
+    else if (newSplit === 'ABC') targetTabs = ['A', 'B', 'C'];
+    else if (newSplit === 'ABCD') targetTabs = ['A', 'B', 'C', 'D'];
+    else if (newSplit === 'ABCDE') targetTabs = ['A', 'B', 'C', 'D', 'E'];
+    else if (newSplit === 'CUSTOM') {
+        // Para personalizado, mantém o que já tem ou inicia com ABC
+        targetTabs = Object.keys(oldWorkouts);
+    }
+
+    targetTabs.forEach(tab => {
+        newWorkouts[tab] = oldWorkouts[tab] || [];
+    });
+
+    customTreinos = newWorkouts;
+    Storage.set('custom_treinos', customTreinos);
+
+    // Recarrega interface
+    renderTabs();
+    // switchTab já cuida de validar se a aba atual existe
+    switchTab(currentTab);
+    
+    showDialog('✅', 'Divisão Atualizada', `Divisão alterada para ${newSplit}.`);
+}
+
+function addCustomTab() {
+    const workouts = getActiveWorkouts();
+    const existingTabs = Object.keys(workouts);
+    
+    // Tenta encontrar a próxima letra disponível (A-Z)
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let nextTab = 'A';
+    for (let char of letters) {
+        if (!existingTabs.includes(char)) {
+            nextTab = char;
+            break;
+        }
+    }
+    
+    // Se passar de Z, usa um número
+    if (existingTabs.includes(nextTab)) {
+        nextTab = existingTabs.length + 1;
+    }
+
+    if (!customTreinos) customTreinos = { ...workouts };
+    customTreinos[nextTab] = [];
+    Storage.set('custom_treinos', customTreinos);
+    
+    renderTabs();
+    switchTab(nextTab);
+    openEditor(); // Abre o editor para o usuário adicionar exercícios à nova aba
+}
+
+function removeCustomTab(tab) {
+    if (!confirm(`Tem certeza que deseja remover o Treino ${tab} e todos os seus exercícios?`)) return;
+    
+    if (!customTreinos) customTreinos = { ...getActiveWorkouts() };
+    delete customTreinos[tab];
+    
+    // Garante que sobra pelo menos uma aba
+    if (Object.keys(customTreinos).length === 0) {
+        customTreinos['A'] = [];
+    }
+    
+    Storage.set('custom_treinos', customTreinos);
+    
+    closeEditor();
+    renderTabs();
+    switchTab(Object.keys(customTreinos)[0]);
 }
 
 // ============================================

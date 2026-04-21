@@ -23,8 +23,8 @@
     ">
 
     <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json?v=25">
-    <link rel="apple-touch-icon" href="/icon-192.png">
+    <link rel="manifest" href="manifest.json?v=27">
+    <link rel="apple-touch-icon" href="icon-192.png">
 
     <!-- Plyr CSS -->
     <link
@@ -34,7 +34,7 @@
         crossorigin="anonymous">
 
     <!-- App CSS -->
-    <link rel="stylesheet" href="styles.css?v=25">
+    <link rel="stylesheet" href="styles.css?v=27">
 </head>
 
 <body>
@@ -167,7 +167,7 @@
     <div id="install-banner" class="install-banner">
         <div class="install-info">
             <div class="install-icon" style="background: none; padding: 0;">
-                <img src="/logo.png" alt="AURA FIT" style="width: 50px; height: 50px; border-radius: 12px; object-fit: cover;">
+                <img src="logo.png" alt="AURA FIT" style="width: 50px; height: 50px; border-radius: 12px; object-fit: cover;">
             </div>
             <div>
                 <strong>Instalar AURA FIT</strong>
@@ -303,19 +303,19 @@
     </dialog>
 
     <!-- Scripts -->
-    <script src="/data/exercises.js"></script>
-    <script src="/data/exercise_catalog.js"></script>
+    <script src="data/exercises.js"></script>
+    <script src="data/exercise_catalog.js"></script>
     <script
         src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"
         integrity="sha384-5sFtjkYC6dakcOUFuxVZ++Jv0U/CI+tM55PY+p/wi9vBpjvgY8/FTbDb5DRFMdqb"
         crossorigin="anonymous">
     </script>
-    <script src="/app.js?v=26"></script>
+    <script src="app.js?v=27"></script>
 
     <!-- PWA Registration -->
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js?v=26').catch(() => {});
+            navigator.serviceWorker.register('sw.js?v=27').catch(() => {});
         }
     </script>
 </body>

@@ -1747,7 +1747,7 @@ async function generateWorkoutWithAI() {
             endpoint = 'https://openrouter.ai/api/v1/chat/completions';
             model = 'google/gemini-flash-1.5'; // Rápido e gratuito/barato no OpenRouter
             headers['HTTP-Referer'] = 'https://afit.app'; // Requisito OpenRouter
-            headers['X-Title'] = 'A-FIT Mobile';
+            headers['X-Title'] = 'AURA FIT Mobile';
         }
         
         const systemPrompt = `Você é um Personal Trainer de elite. Monte um treino baseado no pedido do usuário.
@@ -1908,4 +1908,9 @@ document.addEventListener('DOMContentLoaded', function() {
             showDialog('📱', 'AURA FIT Instalado!', 'O app foi adicionado à sua tela de início com sucesso. Bons treinos!');
         }, 1500);
     });
+
+    // --- INICIALIZAÇÃO DO APP ---
+    // Importante: Estes comandos dão o "boot" na interface
+    renderTabs();
+    switchTab('A');
 });

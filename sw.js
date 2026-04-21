@@ -5,7 +5,7 @@
  * Network-first para CDN (Plyr, fontes).
  */
 
-const CACHE_NAME = 'aura-fit-v26';
+const CACHE_NAME = 'aura-fit-v27';
 const LOCAL_ASSETS = [
     '/',
     '/index.html',

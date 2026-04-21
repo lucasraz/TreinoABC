@@ -346,7 +346,12 @@ function renderExercises(tab) {
         title.textContent = ex.name;
         const series = document.createElement('div');
         series.className = 'ex-series';
-        series.textContent = ex.series;
+        // Suporta formato novo (sets/reps) ou legado (series)
+        if (ex.sets !== undefined && ex.reps !== undefined) {
+            series.textContent = `${ex.sets} Séries • ${ex.reps} Reps`;
+        } else {
+            series.textContent = ex.series || '';
+        }
         info.appendChild(title);
         info.appendChild(series);
 
@@ -692,6 +697,8 @@ function openEditor() {
     editorWorkout = (workouts[currentTab] || []).map(ex => ({
         id: ex.id,
         name: ex.name,
+        sets: ex.sets,
+        reps: ex.reps,
         series: ex.series,
         yt_id: ex.yt_id || ''
     }));
@@ -763,15 +770,32 @@ function renderEditorList() {
             info.appendChild(name);
             info.appendChild(ytInfo);
             
-            // Series input
-            const seriesInput = document.createElement('input');
-            seriesInput.type = 'text';
-            seriesInput.className = 'editor-series-input';
-            seriesInput.value = ex.series;
-            seriesInput.placeholder = '3x 10 rep';
-            seriesInput.addEventListener('change', function() {
-                editorWorkout[index].series = this.value;
+            // Sets & Reps inputs (Container)
+            const inputsWrap = document.createElement('div');
+            inputsWrap.className = 'editor-inputs-wrap';
+
+            const setsInput = document.createElement('input');
+            setsInput.type = 'number';
+            setsInput.className = 'editor-sets-input';
+            setsInput.value = ex.sets || '';
+            setsInput.placeholder = 'Sets';
+            setsInput.title = 'Séries';
+            setsInput.addEventListener('change', function() {
+                editorWorkout[index].sets = parseInt(this.value) || 0;
             });
+
+            const repsInput = document.createElement('input');
+            repsInput.type = 'text';
+            repsInput.className = 'editor-reps-input';
+            repsInput.value = ex.reps || '';
+            repsInput.placeholder = 'Reps';
+            repsInput.title = 'Repetições';
+            repsInput.addEventListener('change', function() {
+                editorWorkout[index].reps = this.value;
+            });
+
+            inputsWrap.appendChild(setsInput);
+            inputsWrap.appendChild(repsInput);
             
             // Edit YT button
             const btnEditYt = document.createElement('button');
@@ -797,7 +821,7 @@ function renderEditorList() {
             });
             
             item.appendChild(info);
-            item.appendChild(seriesInput);
+            item.appendChild(inputsWrap);
             item.appendChild(btnEditYt);
             item.appendChild(btnRemove);
             list.appendChild(item);
@@ -833,12 +857,23 @@ function renderEditorList() {
     inputName.placeholder = 'Nome do exercício';
     inputName.maxLength = 60;
     
-    const inputSeries = document.createElement('input');
-    inputSeries.type = 'text';
-    inputSeries.className = 'custom-input';
-    inputSeries.id = 'custom-ex-series';
-    inputSeries.placeholder = 'Séries (ex: 3x 10-12 rep)';
-    inputSeries.maxLength = 30;
+    const inputsRow = document.createElement('div');
+    inputsRow.className = 'editor-row';
+
+    const inputSets = document.createElement('input');
+    inputSets.type = 'number';
+    inputSets.className = 'custom-input';
+    inputSets.id = 'custom-ex-sets';
+    inputSets.placeholder = 'Séries';
+    
+    const inputReps = document.createElement('input');
+    inputReps.type = 'text';
+    inputReps.className = 'custom-input';
+    inputReps.id = 'custom-ex-reps';
+    inputReps.placeholder = 'Reps (ex: 12)';
+    
+    inputsRow.appendChild(inputSets);
+    inputsRow.appendChild(inputReps);
     
     const inputYt = document.createElement('input');
     inputYt.type = 'text';
@@ -856,7 +891,7 @@ function renderEditorList() {
     });
     
     form.appendChild(inputName);
-    form.appendChild(inputSeries);
+    form.appendChild(inputsRow);
     form.appendChild(inputYt);
     form.appendChild(btnAdd);
     body.appendChild(form);
@@ -869,7 +904,11 @@ function renderEditorList() {
     btnReset.addEventListener('click', function(e) {
         e.preventDefault();
         editorWorkout = TREINOS[currentTab].map(ex => ({
-            id: ex.id, name: ex.name, series: ex.series, yt_id: ex.yt_id || ''
+            id: ex.id, 
+            name: ex.name, 
+            sets: ex.sets, 
+            reps: ex.reps, 
+            yt_id: ex.yt_id || ''
         }));
         renderEditorList();
     });
@@ -877,8 +916,8 @@ function renderEditorList() {
 }
 
 function addCustomExercise() {
-    const nameInput = document.getElementById('custom-ex-name');
-    const seriesInput = document.getElementById('custom-ex-series');
+    const setsInput = document.getElementById('custom-ex-sets');
+    const repsInput = document.getElementById('custom-ex-reps');
     const ytInput = document.getElementById('custom-ex-yt');
     
     const name = nameInput.value.trim();
@@ -887,13 +926,15 @@ function addCustomExercise() {
         return;
     }
     
-    const series = seriesInput.value.trim() || '3x 10-12 rep';
+    const sets = parseInt(setsInput.value) || 3;
+    const reps = repsInput.value.trim() || '12';
     const ytId = extractYouTubeId(ytInput.value);
     
     editorWorkout.push({
         id: generateExerciseId(),
         name: name,
-        series: series,
+        sets: sets,
+        reps: reps,
         yt_id: ytId
     });
     
@@ -908,15 +949,17 @@ function saveEditor() {
     // Inicializa customTreinos se não existe
     if (!customTreinos) {
         customTreinos = {
-            'A': TREINOS.A.map(ex => ({ id: ex.id, name: ex.name, series: ex.series, yt_id: ex.yt_id || '' })),
-            'B': TREINOS.B.map(ex => ({ id: ex.id, name: ex.name, series: ex.series, yt_id: ex.yt_id || '' })),
-            'C': TREINOS.C.map(ex => ({ id: ex.id, name: ex.name, series: ex.series, yt_id: ex.yt_id || '' }))
+            'A': TREINOS.A.map(ex => ({ id: ex.id, name: ex.name, sets: ex.sets, reps: ex.reps, yt_id: ex.yt_id || '' })),
+            'B': TREINOS.B.map(ex => ({ id: ex.id, name: ex.name, sets: ex.sets, reps: ex.reps, yt_id: ex.yt_id || '' })),
+            'C': TREINOS.C.map(ex => ({ id: ex.id, name: ex.name, sets: ex.sets, reps: ex.reps, yt_id: ex.yt_id || '' }))
         };
     }
     
     customTreinos[currentTab] = editorWorkout.map(ex => ({
         id: ex.id,
         name: ex.name,
+        sets: ex.sets,
+        reps: ex.reps,
         series: ex.series,
         yt_id: ex.yt_id || ''
     }));
@@ -1049,7 +1092,8 @@ function addFromCatalog(catalogEx) {
     editorWorkout.push({
         id: generateExerciseId(),
         name: catalogEx.name,
-        series: '3x 10-12 rep',
+        sets: 3,
+        reps: '12',
         yt_id: ''
     });
     

@@ -953,8 +953,16 @@ h1 {
     color: var(--text-muted);
 }
 
-.editor-series-input {
-    width: 90px;
+.editor-inputs-wrap {
+    display: flex;
+    gap: 6px;
+    width: 140px;
+    flex-shrink: 0;
+}
+
+.editor-sets-input,
+.editor-reps-input {
+    width: 100%;
     padding: 6px 8px;
     border-radius: var(--radius-sm);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -967,15 +975,15 @@ h1 {
     transition: all var(--transition-fast);
 }
 
-.editor-series-input:focus {
+.editor-sets-input {
+    width: 50px;
+}
+
+.editor-sets-input:focus,
+.editor-reps-input:focus {
     outline: none;
     border-color: var(--accent-color);
     box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.1);
-}
-
-.editor-series-input::placeholder {
-    color: var(--text-muted);
-    font-weight: 400;
 }
 
 .editor-ex-yt {
@@ -1023,23 +1031,18 @@ h1 {
     transform: scale(1.15);
 }
 
-/* --- Series input in editor --- */
-.editor-series-input {
-    width: 100px;
-    padding: 4px 6px;
-    border-radius: 4px;
-    border: 1px solid var(--card-border);
-    background: rgba(0, 0, 0, 0.3);
-    color: var(--text-main);
-    font-family: 'Inter', sans-serif;
-    font-size: 0.75rem;
-    text-align: center;
-    flex-shrink: 0;
+.editor-row {
+    display: flex;
+    gap: 10px;
+    width: 100%;
 }
 
-.editor-series-input:focus {
-    outline: none;
-    border-color: var(--accent-color);
+.editor-row .custom-input {
+    flex: 1;
+}
+
+.editor-row #custom-ex-sets {
+    flex: 0 0 80px;
 }
 
 /* --- Add from Catalog --- */

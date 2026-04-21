@@ -31,7 +31,7 @@ App web para acompanhamento de treinos de musculação no formato ABC (Peito/Omb
 
 ## Design Patterns
 - **Separação de responsabilidades**: HTML, CSS e JS em arquivos distintos
-- **Dados desacoplados**: Exercícios em arquivo separado (`data/exercises.js`)
+- **Dados desacoplados**: Exercícios em arquivo separado (`data/exercises.js`) usando campos `sets` e `reps` separados.
 - **Catálogo extenso**: 126 exercícios em 11 grupos (`data/exercise_catalog.js`)
 - **Módulo de Storage**: Funções centralizadas para ler/salvar localStorage
 - **Dialog nativo**: `<dialog>` em vez de `alert()` para notificações

@@ -123,17 +123,6 @@ header {
     margin-top: 8px;
 }
 
-.install-banner {
-    background: rgba(250, 204, 21, 0.1);
-    border: 1px solid var(--accent-color);
-    color: var(--text-main);
-    padding: 10px;
-    margin: 10px;
-    border-radius: var(--radius-sm);
-    text-align: center;
-    font-size: 0.85rem;
-    cursor: pointer;
-}
 
 .session-metrics {
     color: var(--text-muted);

@@ -14,6 +14,7 @@ const LOCAL_ASSETS = [
     '/data/exercises.js',
     '/data/exercise_catalog.js',
     '/manifest.json',
+    '/logo.png',
     '/icon-192.png',
     '/icon-512.png'
 ];

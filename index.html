@@ -1,18 +1,16 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="description" content="A-FIT: App de treino ABC para musculação. Acompanhe seus exercícios, cargas e evolução.">
     <meta name="theme-color" content="#0a0a0c">
-    <link rel="manifest" href="manifest.json">
+    
     <link rel="icon" type="image/png" href="logo.png">
     <title>A-FIT</title>
 
     <!-- Segurança: Content Security Policy -->
-    <!-- Permite scripts apenas do próprio domínio e do CDN do Plyr.
-         Permite iframes apenas do YouTube (sem cookies). -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
         script-src 'self' https://cdn.plyr.io;
@@ -25,10 +23,10 @@
     ">
 
     <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json?v=21">
+    <link rel="manifest" href="manifest.json?v=22">
     <link rel="apple-touch-icon" href="icon-192.png">
 
-    <!-- Plyr CSS — SRI garante que o arquivo não foi adulterado no CDN -->
+    <!-- Plyr CSS -->
     <link
         rel="stylesheet"
         href="https://cdn.plyr.io/3.7.8/plyr.css"
@@ -106,7 +104,7 @@
     <!-- Exercise Cards -->
     <div id="content" class="exercise-list"></div>
 
-    <!-- Dialog: Notificações (substitui alert) -->
+    <!-- Dialog: Notificações -->
     <dialog class="app-dialog" id="app-dialog">
         <div class="dialog-icon" id="dialog-icon">🎉</div>
         <div class="dialog-title" id="dialog-title">Título</div>
@@ -125,7 +123,7 @@
     <!-- Dialog: Editor de Treino -->
     <dialog class="app-dialog editor-dialog" id="editor-dialog">
         <div class="editor-header">
-            <h2 id="editor-title">Editar Treino A</h2>
+            <h2 id="editor-title">Editar Treino</h2>
             <button type="button" class="btn-close-editor" id="btn-close-editor">×</button>
         </div>
         <div class="editor-body" id="editor-body">
@@ -252,7 +250,7 @@
         </div>
     </dialog>
 
-    <!-- Dialog: Celebração de Treino Concluído -->
+    <!-- Dialog: Celebração -->
     <dialog id="celebration-dialog" class="celebration-dialog">
         <div class="celebration-content">
             <div class="confetti-container" id="confetti-container"></div>
@@ -277,13 +275,7 @@
             <p><strong>Privacidade Total:</strong> Seus dados nunca saem deste aparelho. Sem contas, sem rastreamento.</p>
             <hr style="margin: 15px 0; opacity: 0.1;">
             <p style="text-align: left; font-size: 0.85rem; margin-bottom: 10px;">
-                <strong>Sobre a IA:</strong> Ao usar o AI Coach, sua <em>OpenAI API Key</em> é salva apenas no seu navegador. O app se comunica diretamente com a OpenAI; não temos servidores intermediários e nunca vemos sua chave ou seus treinos.
-            </p>
-            <p style="text-align: left; font-size: 0.85rem;">
-                1. Use 🛠️ <strong>Treino</strong> para montar manualmente.<br>
-                2. Use ✨ <strong>AI Coach</strong> para gerar treinos via IA.<br>
-                3. Arraste <code>⋮⋮</code> para reordenar.<br>
-                4. 🟢 <strong>Conclua</strong> para salvar seu streak!
+                <strong>Sobre a IA:</strong> Ao usar o AI Coach, sua <em>API Key</em> é salva apenas no seu navegador. O app se comunica diretamente com os provedores; não temos servidores intermediários.
             </p>
         </div>
         <button id="guide-close-btn" class="dialog-btn">Entendi!</button>
@@ -295,10 +287,10 @@
         <h3 class="dialog-title">A-FIT AI Coach</h3>
         <div id="ai-coach-content" class="dialog-message scrollable-content">
             <p style="font-size: 0.85rem; margin-bottom: 15px; opacity: 0.8;">
-                Este assistente usa o modelo <strong>GPT-4o-mini</strong>. Configure sua <em>API Key</em> em 💾 <strong>Backup</strong> para ativar. Eu montarei o treino ideal usando apenas os exercícios do nosso catálogo.
+                Gere treinos personalizados usando modelos avançados. Configure sua chave em 💾 <strong>Backup</strong>.
             </p>
             <div class="ai-prompt-container">
-                <textarea id="ai-user-prompt" placeholder="Ex: Monte um treino focado em hipertrofia para braços e costas..."></textarea>
+                <textarea id="ai-user-prompt" placeholder="Ex: Monte um treino focado em hipertrofia..."></textarea>
             </div>
             <div id="ai-status" class="ai-status"></div>
             <div id="ai-preview" class="ai-preview" style="display: none;"></div>
@@ -313,7 +305,6 @@
     <!-- Scripts -->
     <script src="data/exercises.js"></script>
     <script src="data/exercise_catalog.js"></script>
-    <!-- Plyr JS — SRI garante que o arquivo não foi adulterado no CDN -->
     <script
         src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"
         integrity="sha384-5sFtjkYC6dakcOUFuxVZ++Jv0U/CI+tM55PY+p/wi9vBpjvgY8/FTbDb5DRFMdqb"
@@ -321,12 +312,10 @@
     </script>
     <script src="app.js?v=22"></script>
 
-    <!-- PWA Service Worker Registration -->
+    <!-- PWA Registration -->
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(function() {
-                // Service worker registration failed silently
-            });
+            navigator.serviceWorker.register('sw.js?v=22').catch(() => {});
         }
     </script>
 </body>

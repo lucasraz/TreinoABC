@@ -338,64 +338,75 @@ header {
     background: rgba(255, 255, 255, 0.1);
 }
 
-/* --- Action Bar --- */
+/* --- Action Bar Premium --- */
 .action-bar {
-    display: flex;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
     padding: 0 16px;
-    margin-bottom: 16px;
+    margin: 15px 0 25px;
 }
 
-.btn-edit-workout {
-    flex: 1;
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--card-border);
-    color: var(--text-main);
-    padding: 12px;
-    border-radius: var(--radius-sm);
-    font-weight: 700;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: all var(--transition-med);
+.action-btn {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
+    padding: 10px 5px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all var(--transition-med);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.action-icon {
+    font-size: 1.1rem;
+}
+
+.action-text {
+    font-size: 0.65rem;
+    font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    opacity: 0.7;
 }
 
-.btn-edit-workout:hover {
+.action-btn:hover {
     background: rgba(255, 255, 255, 0.08);
-    border-color: var(--primary);
-    box-shadow: 0 0 15px rgba(250, 204, 21, 0.1);
-}
-
-.btn-settings-shortcut {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--card-border);
-    color: var(--text-main);
-    padding: 12px;
-    width: 48px;
-    border-radius: var(--radius-sm);
-    font-size: 1.1rem;
-    cursor: pointer;
-    transition: all var(--transition-med);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-settings-shortcut:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: var(--primary);
+    border-color: rgba(255, 255, 255, 0.2);
     transform: translateY(-2px);
-    box-shadow: 0 0 15px rgba(250, 204, 21, 0.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.action-btn:active {
+    transform: translateY(0);
+}
+
+/* Accent Colors */
+.btn-edit {
+    border-bottom: 2px solid var(--accent-color);
+}
+.btn-edit:hover {
+    background: rgba(250, 204, 21, 0.1);
+}
+
+.btn-ai-coach {
+    border-bottom: 2px solid #6366f1;
+}
+.btn-ai-coach:hover {
+    background: rgba(99, 102, 241, 0.15);
+}
+
+.btn-settings {
+    border-bottom: 2px solid #8888a0;
+}
+.btn-settings:hover {
+    background: rgba(136, 136, 160, 0.1);
 }
 
 /* --- Progress Bar --- */
@@ -1883,13 +1894,8 @@ header {
     border-color: var(--danger);
 }
 
-/* --- AI Coach UI --- */
 .btn-ai-coach {
-    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
-    color: white !important;
-    border: none !important;
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3) !important;
-    font-weight: 700 !important;
+    border-bottom: 2px solid #6366f1;
 }
 
 .ai-prompt-container {

@@ -10,11 +10,29 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Meu Treino ABC</title>
 
+    <!-- Segurança: Content Security Policy -->
+    <!-- Permite scripts apenas do próprio domínio e do CDN do Plyr.
+         Permite iframes apenas do YouTube (sem cookies). -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' https://cdn.plyr.io;
+        style-src 'self' https://fonts.googleapis.com https://cdn.plyr.io 'unsafe-inline';
+        font-src https://fonts.gstatic.com;
+        frame-src https://www.youtube-nocookie.com;
+        connect-src 'self';
+        img-src 'self' data: https:;
+        media-src 'self';
+    ">
+
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
 
-    <!-- Plyr CSS -->
-    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
+    <!-- Plyr CSS — SRI garante que o arquivo não foi adulterado no CDN -->
+    <link
+        rel="stylesheet"
+        href="https://cdn.plyr.io/3.7.8/plyr.css"
+        integrity="sha384-FDFJN4eDoTbFzL8KHLAOmtAicPaFc44D0JrdAwgO91ZDgGmAHrcpMWLCwTxBSVI7"
+        crossorigin="anonymous">
 
     <!-- App CSS -->
     <link rel="stylesheet" href="styles.css?v=4">
@@ -141,7 +159,12 @@
     <!-- Scripts -->
     <script src="data/exercises.js"></script>
     <script src="data/exercise_catalog.js"></script>
-    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    <!-- Plyr JS — SRI garante que o arquivo não foi adulterado no CDN -->
+    <script
+        src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"
+        integrity="sha384-5sFtjkYC6dakcOUFuxVZ++Jv0U/CI+tM55PY+p/wi9vBpjvgY8/FTbDb5DRFMdqb"
+        crossorigin="anonymous">
+    </script>
     <script src="app.js?v=4"></script>
 
     <!-- PWA Service Worker Registration -->

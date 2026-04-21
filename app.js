@@ -34,11 +34,61 @@ const Storage = {
 // MÓDULO: Estado do App
 // ============================================
 
+// --- Validadores de Schema do localStorage ---
+// Garantem que dados corrompidos ou manipulados manualmente
+// não causem erros em runtime. Retornam o dado se válido,
+// ou o fallback seguro caso contrário.
+
+function isValidStatsData(data) {
+    return data !== null &&
+        typeof data === 'object' &&
+        typeof data.streak === 'number' &&
+        typeof data.totalDays === 'number' &&
+        (data.lastDate === null || typeof data.lastDate === 'string');
+}
+
+function isValidSavedData(data) {
+    if (typeof data !== 'object' || data === null) return false;
+    return Object.values(data).every(function(v) {
+        return typeof v === 'object' && v !== null &&
+            (v.carga === undefined || typeof v.carga === 'number') &&
+            (v.checked === undefined || typeof v.checked === 'boolean');
+    });
+}
+
+function isValidHistoryData(data) {
+    if (typeof data !== 'object' || data === null) return false;
+    return Object.values(data).every(function(arr) {
+        return Array.isArray(arr) && arr.every(function(e) {
+            return typeof e.date === 'string' && typeof e.carga === 'number';
+        });
+    });
+}
+
+function isValidCustomTreinos(data) {
+    if (data === null) return true; // null é válido (usa padrão)
+    if (typeof data !== 'object') return false;
+    return ['A', 'B', 'C'].every(function(tab) {
+        return !data[tab] || Array.isArray(data[tab]);
+    });
+}
+
+// --- Inicialização com validação de schema ---
+const _rawSavedData = Storage.get('treino_data', {});
+let savedData = isValidSavedData(_rawSavedData) ? _rawSavedData : {};
+
+const _rawStatsData = Storage.get('treino_stats', null);
+let statsData = isValidStatsData(_rawStatsData)
+    ? _rawStatsData
+    : { lastDate: null, totalDays: 0, streak: 0 };
+
+const _rawHistoryData = Storage.get('treino_history', {});
+let historyData = isValidHistoryData(_rawHistoryData) ? _rawHistoryData : {};
+
+const _rawCustomTreinos = Storage.get('custom_treinos', null);
+let customTreinos = isValidCustomTreinos(_rawCustomTreinos) ? _rawCustomTreinos : null;
+
 let currentTab = 'A';
-let savedData = Storage.get('treino_data', {});
-let statsData = Storage.get('treino_stats', { lastDate: null, totalDays: 0, streak: 0 });
-let historyData = Storage.get('treino_history', {});
-let customTreinos = Storage.get('custom_treinos', null); // null = usar padrão
 
 // Timer state
 let timerInterval = null;

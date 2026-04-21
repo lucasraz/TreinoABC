@@ -1055,6 +1055,7 @@ function renderEditorList() {
         editorWorkout = TREINOS[currentTab].map(ex => ({
             id: ex.id, 
             name: ex.name, 
+            group: ex.group,
             sets: ex.sets, 
             reps: ex.reps, 
             yt_id: ex.yt_id || ''
@@ -1079,9 +1080,17 @@ function addCustomExercise() {
     const reps = repsInput.value.trim() || '12';
     const ytId = extractYouTubeId(ytInput.value);
     
+    // Tenta encontrar o grupo no catálogo automaticamente pelo nome
+    let group = null;
+    if (typeof EXERCISE_CATALOG !== 'undefined') {
+        const found = EXERCISE_CATALOG.find(ex => ex.name.toLowerCase() === name.toLowerCase());
+        if (found) group = found.group;
+    }
+
     editorWorkout.push({
         id: generateExerciseId(),
         name: name,
+        group: group,
         sets: sets,
         reps: reps,
         yt_id: ytId
@@ -1098,15 +1107,16 @@ function saveEditor() {
     // Inicializa customTreinos se não existe
     if (!customTreinos) {
         customTreinos = {
-            'A': TREINOS.A.map(ex => ({ id: ex.id, name: ex.name, sets: ex.sets, reps: ex.reps, yt_id: ex.yt_id || '' })),
-            'B': TREINOS.B.map(ex => ({ id: ex.id, name: ex.name, sets: ex.sets, reps: ex.reps, yt_id: ex.yt_id || '' })),
-            'C': TREINOS.C.map(ex => ({ id: ex.id, name: ex.name, sets: ex.sets, reps: ex.reps, yt_id: ex.yt_id || '' }))
+            'A': TREINOS.A.map(ex => ({ id: ex.id, name: ex.name, group: ex.group, sets: ex.sets, reps: ex.reps, yt_id: ex.yt_id || '' })),
+            'B': TREINOS.B.map(ex => ({ id: ex.id, name: ex.name, group: ex.group, sets: ex.sets, reps: ex.reps, yt_id: ex.yt_id || '' })),
+            'C': TREINOS.C.map(ex => ({ id: ex.id, name: ex.name, group: ex.group, sets: ex.sets, reps: ex.reps, yt_id: ex.yt_id || '' }))
         };
     }
     
     customTreinos[currentTab] = editorWorkout.map(ex => ({
         id: ex.id,
         name: ex.name,
+        group: ex.group,
         sets: ex.sets,
         reps: ex.reps,
         series: ex.series,

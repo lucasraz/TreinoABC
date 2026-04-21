@@ -1841,12 +1841,11 @@ async function generateWorkoutWithAI() {
                 endpoint = 'https://api.openai.com/v1/chat/completions';
                 headers['Authorization'] = `Bearer ${key}`;
                 body = {
-                    model: 'gpt-4o-mini',
+                    model: 'gpt-5-preview',
                     messages: [
                         { role: 'system', content: systemPrompt },
                         { role: 'user', content: userPrompt }
-                    ],
-                    temperature: 0.7
+                    ]
                 };
                 break;
 
@@ -1854,9 +1853,9 @@ async function generateWorkoutWithAI() {
                 endpoint = 'https://api.anthropic.com/v1/messages';
                 headers['x-api-key'] = key;
                 headers['anthropic-version'] = '2023-06-01';
-                headers['anthropic-dangerously-allow-it-external-helper-access'] = 'true'; // Para browsers
+                headers['anthropic-dangerously-allow-it-external-helper-access'] = 'true';
                 body = {
-                    model: 'claude-3-haiku-20240307',
+                    model: 'claude-opus-4-7',
                     max_tokens: 1024,
                     system: systemPrompt,
                     messages: [{ role: 'user', content: userPrompt }]
@@ -1864,8 +1863,8 @@ async function generateWorkoutWithAI() {
                 break;
 
             case 'gemini':
-                // Usando v1 estável para o gemini-1.5-flash
-                endpoint = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
+                // Usando v1beta para o modelo preview Gemini 3 Flash
+                endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${key}`;
                 body = {
                     contents: [{
                         parts: [{ text: systemPrompt + "\n\nUsuário pediu: " + userPrompt }]
@@ -1877,7 +1876,7 @@ async function generateWorkoutWithAI() {
                 endpoint = 'https://api.groq.com/openai/v1/chat/completions';
                 headers['Authorization'] = `Bearer ${key}`;
                 body = {
-                    model: 'llama-3.1-70b-versatile',
+                    model: 'llama-4-scout',
                     messages: [
                         { role: 'system', content: systemPrompt },
                         { role: 'user', content: userPrompt }
@@ -1891,7 +1890,7 @@ async function generateWorkoutWithAI() {
                 headers['HTTP-Referer'] = 'https://afit.app';
                 headers['X-Title'] = 'AURA FIT Mobile';
                 body = {
-                    model: 'google/gemini-flash-1.5',
+                    model: 'google/gemini-3-flash-preview',
                     messages: [
                         { role: 'system', content: systemPrompt },
                         { role: 'user', content: userPrompt }

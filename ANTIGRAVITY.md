@@ -38,9 +38,9 @@ App web para acompanhamento de treinos de musculação no formato personalizáve
 - **Dialog nativo**: Uso extensivo da API `<dialog>` para uma experiência de sistema.
 - **Rebranding v24-v28**: Transição completa de A-FIT para AURA FIT, com logotipo transparente e identidade visual premium.
 
-## Versão Atual: v30
-- [x] **IA Coach**: Migração para o endpoint estável (`v1`) do Gemini para evitar erro de "Model Not Found" que ocorria na `v1beta`.
-- [x] **Segurança (CSP)**: Expansão da CSP para suportar múltiplos provedores de IA (Gemini, Anthropic, Groq).
+## Versão Atual: v31
+- [x] **IA Coach (2026 Ready)**: Atualização de todos os provedores para os modelos mais recentes (Gemini 3 Flash, Claude 4.7 Opus, GPT-5 Preview, Llama 4 Scout).
+- [x] **Bug Fix**: Correção do endpoint e model ID do Gemini para o novo padrão `gemini-3-flash-preview`.
 - [x] **Inicialização**: Consolidação do fluxo de boot do app em `initApp` para evitar conflitos de eventos.
 - [x] **Bug Fix**: Correção de erro de referência (`nameInput`) na criação de exercícios customizados.
 - [x] **Estabilidade**: Verificação de existência de elementos DOM antes de adicionar listeners.

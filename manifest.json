@@ -2,7 +2,7 @@
     "name": "Meu Treino ABC",
     "short_name": "Treino ABC",
     "description": "App de treino ABC para musculação com acompanhamento de cargas e evolução.",
-    "start_url": "/index.html",
+    "start_url": ".",
     "display": "standalone",
     "background_color": "#0a0a0f",
     "theme_color": "#0a0a0f",

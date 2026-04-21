@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+    <rect width="192" height="192" fill="#0a0a0f"/>
+    <!-- Dumbbell -->
+    <g fill="#4facfe">
+        <!-- Barra -->
+        <rect x="58" y="90" width="76" height="12" rx="4"/>
+        <!-- Anilhas Esquerdas -->
+        <rect x="42" y="58" width="12" height="76" rx="4"/>
+        <rect x="28" y="70" width="10" height="52" rx="4"/>
+        <!-- Anilhas Direitas -->
+        <rect x="138" y="58" width="12" height="76" rx="4"/>
+        <rect x="154" y="70" width="10" height="52" rx="4"/>
+    </g>
+</svg>

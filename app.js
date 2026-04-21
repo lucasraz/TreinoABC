@@ -1066,9 +1066,12 @@ function renderEditorList() {
 }
 
 function addCustomExercise() {
+    const nameInput = document.getElementById('custom-ex-name');
     const setsInput = document.getElementById('custom-ex-sets');
     const repsInput = document.getElementById('custom-ex-reps');
     const ytInput = document.getElementById('custom-ex-yt');
+    
+    if (!nameInput) return;
     
     const name = nameInput.value.trim();
     if (!name) {
@@ -1261,7 +1264,7 @@ function addFromCatalog(catalogEx) {
     renderCatalogList();
     // Re-renderiza editor em background
     renderEditorList();
-    // Fecha o catálogo automaticamente para o usuário ver o exercício no editor e poder editar
+    // Fecha o catálogo automaticamente
     closeCatalog();
 }
 
@@ -1270,21 +1273,35 @@ function addFromCatalog(catalogEx) {
 // ============================================
 
 function initApp() {
+    // --- Lógica de Negócio ---
     checkDayReset();
     updateStatsUI();
-    // Timer events
-    document.getElementById('btn-start').addEventListener('click', toggleTimer);
-    document.getElementById('btn-reset').addEventListener('click', resetTimer);
-    document.getElementById('mode-timer').addEventListener('click', () => switchTimerMode('timer'));
-    document.getElementById('mode-stopwatch').addEventListener('click', () => switchTimerMode('stopwatch'));
+    
+    // --- Interface Base ---
+    renderTabs();
+    renderExercises(currentTab);
+    
+    // --- Eventos: Timer ---
+    const btnStart = document.getElementById('btn-start');
+    if (btnStart) btnStart.addEventListener('click', toggleTimer);
+    
+    const btnReset = document.getElementById('btn-reset');
+    if (btnReset) btnReset.addEventListener('click', resetTimer);
+    
+    const modeTimer = document.getElementById('mode-timer');
+    if (modeTimer) modeTimer.addEventListener('click', () => switchTimerMode('timer'));
+    
+    const modeStopwatch = document.getElementById('mode-stopwatch');
+    if (modeStopwatch) modeStopwatch.addEventListener('click', () => switchTimerMode('stopwatch'));
     
     document.querySelectorAll('.preset-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             setTimerPreset(parseInt(this.dataset.seconds));
         });
     });
+    setTimerPreset(60); // Preset padrão
     
-    // --- Input de Peso Corporal ---
+    // --- Eventos: Configurações & Backup ---
     const inputWeight = document.getElementById('input-weight');
     if (inputWeight) {
         inputWeight.value = userWeight;
@@ -1293,20 +1310,11 @@ function initApp() {
             if (!isNaN(val) && val >= 20 && val <= 300) {
                 userWeight = val;
                 Storage.set('user_weight', userWeight);
-                updateProgress(); // Recalcula com o novo peso
+                updateProgress();
             }
         });
     }
 
-    renderTabs();
-    renderExercises(currentTab);
-    
-    // Marca preset padrão
-    setTimerPreset(60);
-    
-    // Event listeners dos presets (removidos os duplicados que estavam abaixo)
-    
-    // Split selection event
     const selectSplit = document.getElementById('select-split');
     if (selectSplit) {
         selectSplit.value = splitType;
@@ -1314,59 +1322,141 @@ function initApp() {
             changeSplit(this.value);
         });
     }
-    
-    // Dialog close buttons
-    document.getElementById('dialog-close-btn').addEventListener('click', closeDialog);
-    document.getElementById('history-close-btn').addEventListener('click', closeHistoryDialog);
-    
-    // Fecha dialog ao clicar no backdrop
-    document.getElementById('app-dialog').addEventListener('click', function(e) {
-        if (e.target === this) closeDialog();
-    });
-    document.getElementById('history-dialog').addEventListener('click', function(e) {
-        if (e.target === this) closeHistoryDialog();
-    });
-    
-    // Editor events
-    document.getElementById('btn-edit-workout').addEventListener('click', function(e) { e.preventDefault(); openEditor(); });
-    document.getElementById('btn-close-editor').addEventListener('click', function(e) { e.preventDefault(); closeEditor(); });
-    document.getElementById('editor-cancel-btn').addEventListener('click', function(e) { e.preventDefault(); closeEditor(); });
-    document.getElementById('editor-save-btn').addEventListener('click', function(e) { e.preventDefault(); saveEditor(); });
-    document.getElementById('editor-dialog').addEventListener('click', function(e) {
-        if (e.target === this) { e.preventDefault(); closeEditor(); }
-    });
-    
-    // Catalog events
-    document.getElementById('catalog-close-btn').addEventListener('click', function(e) { e.preventDefault(); closeCatalog(); });
-    document.getElementById('catalog-search').addEventListener('input', renderCatalogList);
-    document.getElementById('catalog-dialog').addEventListener('click', function(e) {
-        if (e.target === this) { e.preventDefault(); closeCatalog(); }
-    });
-    
-    // YouTube link editor events
-    document.getElementById('yt-save-btn').addEventListener('click', function(e) { e.preventDefault(); saveYtLink(); });
-    document.getElementById('yt-cancel-btn').addEventListener('click', function(e) { e.preventDefault(); closeYtDialog(); });
-    document.getElementById('yt-dialog').addEventListener('click', function(e) {
-        if (e.target === this) { e.preventDefault(); closeYtDialog(); }
-    });
 
-    // Settings / Backup events
     const settingsBtn = document.getElementById('btn-settings');
-    if(settingsBtn) settingsBtn.addEventListener('click', openSettings);
+    if (settingsBtn) settingsBtn.addEventListener('click', openSettings);
     
-    document.getElementById('btn-close-settings').addEventListener('click', closeSettings);
-    document.getElementById('settings-dialog').addEventListener('click', function(e) {
-        if (e.target === this) closeSettings();
-    });
+    const closeSettingsBtn = document.getElementById('btn-close-settings');
+    if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', closeSettings);
+    
+    const settingsDialog = document.getElementById('settings-dialog');
+    if (settingsDialog) {
+        settingsDialog.addEventListener('click', function(e) {
+            if (e.target === this) closeSettings();
+        });
+    }
 
-    document.getElementById('btn-export-backup').addEventListener('click', exportBackup);
-    document.getElementById('input-import-backup').addEventListener('change', importBackup);
+    const exportBtn = document.getElementById('btn-export-backup');
+    if (exportBtn) exportBtn.addEventListener('click', exportBackup);
+    
+    const importInput = document.getElementById('input-import-backup');
+    if (importInput) importInput.addEventListener('change', importBackup);
+    
+    // --- Eventos: Modais de Diálogo ---
+    const dialogCloseBtn = document.getElementById('dialog-close-btn');
+    if (dialogCloseBtn) dialogCloseBtn.addEventListener('click', closeDialog);
+    
+    const historyCloseBtn = document.getElementById('history-close-btn');
+    if (historyCloseBtn) historyCloseBtn.addEventListener('click', closeHistoryDialog);
+    
+    const appDialog = document.getElementById('app-dialog');
+    if (appDialog) {
+        appDialog.addEventListener('click', function(e) {
+            if (e.target === this) closeDialog();
+        });
+    }
+    
+    const historyDialog = document.getElementById('history-dialog');
+    if (historyDialog) {
+        historyDialog.addEventListener('click', function(e) {
+            if (e.target === this) closeHistoryDialog();
+        });
+    }
 
-    // Celebration events
-    document.getElementById('celeb-close-btn').addEventListener('click', closeCelebration);
-    document.getElementById('celebration-dialog').addEventListener('click', function(e) {
-        if (e.target === this) closeCelebration();
-    });
+    // --- Eventos: Editor & Catálogo ---
+    const editWorkoutBtn = document.getElementById('btn-edit-workout');
+    if (editWorkoutBtn) editWorkoutBtn.addEventListener('click', (e) => { e.preventDefault(); openEditor(); });
+    
+    const closeEditorBtn = document.getElementById('btn-close-editor');
+    if (closeEditorBtn) closeEditorBtn.addEventListener('click', (e) => { e.preventDefault(); closeEditor(); });
+    
+    const cancelEditorBtn = document.getElementById('editor-cancel-btn');
+    if (cancelEditorBtn) cancelEditorBtn.addEventListener('click', (e) => { e.preventDefault(); closeEditor(); });
+    
+    const saveEditorBtn = document.getElementById('editor-save-btn');
+    if (saveEditorBtn) saveEditorBtn.addEventListener('click', (e) => { e.preventDefault(); saveEditor(); });
+    
+    const editorDialog = document.getElementById('editor-dialog');
+    if (editorDialog) {
+        editorDialog.addEventListener('click', function(e) {
+            if (e.target === this) closeEditor();
+        });
+    }
+    
+    const catalogCloseBtn = document.getElementById('catalog-close-btn');
+    if (catalogCloseBtn) catalogCloseBtn.addEventListener('click', (e) => { e.preventDefault(); closeCatalog(); });
+    
+    const catalogSearch = document.getElementById('catalog-search');
+    if (catalogSearch) catalogSearch.addEventListener('input', renderCatalogList);
+    
+    const catalogDialog = document.getElementById('catalog-dialog');
+    if (catalogDialog) {
+        catalogDialog.addEventListener('click', function(e) {
+            if (e.target === this) closeCatalog();
+        });
+    }
+
+    // --- Eventos: YouTube Editor ---
+    const saveYtBtn = document.getElementById('yt-save-btn');
+    if (saveYtBtn) saveYtBtn.addEventListener('click', (e) => { e.preventDefault(); saveYtLink(); });
+    
+    const cancelYtBtn = document.getElementById('yt-cancel-btn');
+    if (cancelYtBtn) cancelYtBtn.addEventListener('click', (e) => { e.preventDefault(); closeYtDialog(); });
+    
+    const ytDialog = document.getElementById('yt-dialog');
+    if (ytDialog) {
+        ytDialog.addEventListener('click', function(e) {
+            if (e.target === this) closeYtDialog();
+        });
+    }
+
+    // --- Eventos: Celebração ---
+    const celebCloseBtn = document.getElementById('celeb-close-btn');
+    if (celebCloseBtn) celebCloseBtn.addEventListener('click', closeCelebration);
+    
+    const celebrationDialog = document.getElementById('celebration-dialog');
+    if (celebrationDialog) {
+        celebrationDialog.addEventListener('click', function(e) {
+            if (e.target === this) closeCelebration();
+        });
+    }
+
+    // --- Eventos: Guia & Ajuda ---
+    const helpBtn = document.getElementById('btn-help');
+    if (helpBtn) helpBtn.addEventListener('click', openGuide);
+    
+    const guideCloseBtn = document.getElementById('guide-close-btn');
+    if (guideCloseBtn) guideCloseBtn.addEventListener('click', closeGuide);
+    
+    const guideDialog = document.getElementById('guide-dialog');
+    if (guideDialog) {
+        guideDialog.addEventListener('click', function(e) {
+            if (e.target === this) closeGuide();
+        });
+    }
+
+    // --- Eventos: AI Coach ---
+    const aiBtn = document.getElementById('btn-ai-coach');
+    if (aiBtn) aiBtn.addEventListener('click', openAICoach);
+    
+    const aiCloseBtn = document.getElementById('ai-close-btn');
+    if (aiCloseBtn) aiCloseBtn.addEventListener('click', closeAICoach);
+    
+    const aiGenBtn = document.getElementById('ai-generate-btn');
+    if (aiGenBtn) aiGenBtn.addEventListener('click', generateWorkoutWithAI);
+    
+    const aiApplyBtn = document.getElementById('ai-apply-btn');
+    if (aiApplyBtn) aiApplyBtn.addEventListener('click', applyAIWorkout);
+    
+    const aiCoachDialog = document.getElementById('ai-coach-dialog');
+    if (aiCoachDialog) {
+        aiCoachDialog.addEventListener('click', function(e) {
+            if (e.target === this) closeAICoach();
+        });
+    }
+
+    // --- Lógica de Instalação PWA ---
+    setupPWAInstallation();
 }
 
 // ============================================
@@ -1416,52 +1506,44 @@ function startConfetti() {
     }
 }
 
-// Inicia quando o DOM estiver pronto
-document.addEventListener('DOMContentLoaded', initApp);
+function setupPWAInstallation() {
+    const installBanner = document.getElementById('install-banner');
+    const btnInstall = document.getElementById('btn-install');
+    const btnInstallCancel = document.getElementById('btn-install-cancel');
 
-// ============================================
-// MÓDULO: Instalação PWA Customizada
-// ============================================
-let deferredPrompt;
-const installBanner = document.getElementById('install-banner');
-const btnInstall = document.getElementById('btn-install');
-const btnInstallCancel = document.getElementById('btn-install-cancel');
+    if (!installBanner || !btnInstall || !btnInstallCancel) return;
 
-// Intercepta o evento de instalação padrão
-window.addEventListener('beforeinstallprompt', (e) => {
-    // Previne o mini-infobar padrão de aparecer no mobile
-    e.preventDefault();
-    // Salva o evento para acioná-lo depois
-    deferredPrompt = e;
-    
-    // Mostra nosso banner customizado bonitão após 2 segundos
-    setTimeout(() => {
-        installBanner.classList.add('show');
-    }, 2000);
-});
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        setTimeout(() => {
+            installBanner.classList.add('show');
+        }, 2000);
+    });
 
-// Ação de instalar
-btnInstall.addEventListener('click', async () => {
-    if (deferredPrompt) {
-        // Esconde o banner
-        installBanner.classList.remove('show');
-        // Aciona o prompt nativo
-        deferredPrompt.prompt();
-        // Espera pela resposta do usuário
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-            console.log('Usuário aceitou a instalação do PWA');
-        } else {
-            console.log('Usuário recusou a instalação do PWA');
+    btnInstall.addEventListener('click', async () => {
+        if (deferredPrompt) {
+            installBanner.classList.remove('show');
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log('Instalação do PWA:', outcome);
+            deferredPrompt = null;
         }
-        deferredPrompt = null;
-    }
-});
+    });
 
-// Ação de cancelar
-btnInstallCancel.addEventListener('click', () => {
-    installBanner.classList.remove('show');
-});
+    btnInstallCancel.addEventListener('click', () => {
+        installBanner.classList.remove('show');
+    });
+
+    window.addEventListener('appinstalled', () => {
+        installBanner.classList.remove('show');
+        deferredPrompt = null;
+        setTimeout(() => {
+            showDialog('📱', 'AURA FIT Instalado!', 'O app foi adicionado à sua tela de início com sucesso. Bons treinos!');
+        }, 1500);
+    });
+}
 
 
 
@@ -1899,82 +1981,5 @@ function applyAIWorkout() {
     }
 }
 
-// Inicialização de eventos globais
-document.addEventListener('DOMContentLoaded', function() {
-    const helpBtn = document.getElementById('btn-help');
-    if (helpBtn) helpBtn.addEventListener('click', openGuide);
-    
-    const closeBtn = document.getElementById('guide-close-btn');
-    if (closeBtn) closeBtn.addEventListener('click', closeGuide);
-    
-    const guideDialog = document.getElementById('guide-dialog');
-    if (guideDialog) {
-        guideDialog.addEventListener('click', function(e) {
-            if (e.target === this) closeGuide();
-        });
-    }
-
-    // AI Coach Event Listeners
-    const aiBtn = document.getElementById('btn-ai-coach');
-    if (aiBtn) aiBtn.addEventListener('click', openAICoach);
-    
-    const aiCloseBtn = document.getElementById('ai-close-btn');
-    if (aiCloseBtn) aiCloseBtn.addEventListener('click', closeAICoach);
-    
-    const aiGenBtn = document.getElementById('ai-generate-btn');
-    if (aiGenBtn) aiGenBtn.addEventListener('click', generateWorkoutWithAI);
-    
-    const aiApplyBtn = document.getElementById('ai-apply-btn');
-    if (aiApplyBtn) aiApplyBtn.addEventListener('click', applyAIWorkout);
-
-    // Lógica de Instalação PWA
-    let deferredPrompt;
-    const installBanner = document.getElementById('install-banner');
-    const btnInstall = document.getElementById('btn-install');
-    const btnCancel = document.getElementById('btn-install-cancel');
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-        // Previne o Chrome de mostrar o prompt automático
-        e.preventDefault();
-        deferredPrompt = e;
-        // Mostra o nosso banner customizado
-        if (installBanner) installBanner.classList.add('show');
-    });
-
-    if (btnInstall) {
-        btnInstall.addEventListener('click', async () => {
-            if (!deferredPrompt) return;
-            // Esconde o banner assim que o usuário clica em instalar
-            if (installBanner) installBanner.classList.remove('show');
-            
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') {
-                console.log('Usuário aceitou a instalação');
-            }
-            deferredPrompt = null;
-        });
-    }
-
-    if (btnCancel) {
-        btnCancel.addEventListener('click', () => {
-            if (installBanner) installBanner.classList.remove('show');
-        });
-    }
-
-    window.addEventListener('appinstalled', (event) => {
-        // Limpa o banner e o prompt
-        if (installBanner) installBanner.classList.remove('show');
-        deferredPrompt = null;
-        
-        // Pequeno delay de 1.5s para o SO finalizar a criação do ícone antes de avisar
-        setTimeout(() => {
-            showDialog('📱', 'AURA FIT Instalado!', 'O app foi adicionado à sua tela de início com sucesso. Bons treinos!');
-        }, 1500);
-    });
-
-    // --- INICIALIZAÇÃO DO APP ---
-    // Importante: Estes comandos dão o "boot" na interface
-    renderTabs();
-    switchTab('A');
-});
+// Inicialização Global
+document.addEventListener('DOMContentLoaded', initApp);

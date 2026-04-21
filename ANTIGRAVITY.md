@@ -38,11 +38,11 @@ App web para acompanhamento de treinos de musculação no formato personalizáve
 - **Dialog nativo**: Uso extensivo da API `<dialog>` para uma experiência de sistema.
 - **Rebranding v24-v28**: Transição completa de A-FIT para AURA FIT, com logotipo transparente e identidade visual premium.
 
-## Versão Atual: v28
-- [x] Correção de sintaxe crítica no `app.js`.
-- [x] Restauração da inicialização do app (`renderTabs`/`switchTab`).
-- [x] PWA Blindado com caminhos absolutos e escopo explícito.
-- [x] Delay no feedback de instalação para melhor UX no celular.
+## Versão Atual: v29
+- [x] **Segurança (CSP)**: Expansão da CSP para suportar múltiplos provedores de IA (Gemini, Anthropic, Groq).
+- [x] **Inicialização**: Consolidação do fluxo de boot do app em `initApp` para evitar conflitos de eventos.
+- [x] **Bug Fix**: Correção de erro de referência (`nameInput`) na criação de exercícios customizados.
+- [x] **Estabilidade**: Verificação de existência de elementos DOM antes de adicionar listeners.
 
 ## Funcionalidades
 - [x] **AI Coach**: Geração de treinos via IA (OpenRouter/OpenAI).

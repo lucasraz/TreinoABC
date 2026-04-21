@@ -1864,7 +1864,8 @@ async function generateWorkoutWithAI() {
                 break;
 
             case 'gemini':
-                endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+                // Usando v1 estável para o gemini-1.5-flash
+                endpoint = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${key}`;
                 body = {
                     contents: [{
                         parts: [{ text: systemPrompt + "\n\nUsuário pediu: " + userPrompt }]

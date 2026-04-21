@@ -214,10 +214,17 @@
                 <div class="settings-group">
                     <h4>Inteligência Artificial (Opcional)</h4>
                     <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px;">
-                        Use sua própria chave da OpenAI para gerar treinos. A chave fica salva apenas no seu dispositivo.
+                        Configure sua chave para gerar treinos personalizados.
                     </p>
                     <div class="setting-item">
-                        <label>OpenAI API Key:</label>
+                        <label>Provedor:</label>
+                        <select id="select-ai-provider">
+                            <option value="openai">OpenAI (GPT-4o-mini)</option>
+                            <option value="openrouter">OpenRouter (Claude, Llama, Gemini)</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label>API Key:</label>
                         <input type="password" id="input-openai-key" placeholder="sk-...">
                     </div>
                 </div>

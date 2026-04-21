@@ -1600,16 +1600,23 @@ function removeCustomTab(tab) {
 
 function openSettings() {
     const key = Storage.get('openai_api_key', '');
+    const provider = Storage.get('ai_provider', 'openai');
     const input = document.getElementById('input-openai-key');
+    const select = document.getElementById('select-ai-provider');
+    
     if (input) input.value = key;
+    if (select) select.value = provider;
+    
     document.getElementById('settings-dialog').showModal();
 }
 
 function closeSettings() {
     const keyInput = document.getElementById('input-openai-key');
-    if (keyInput) {
-        Storage.set('openai_api_key', keyInput.value.trim());
-    }
+    const select = document.getElementById('select-ai-provider');
+    
+    if (keyInput) Storage.set('openai_api_key', keyInput.value.trim());
+    if (select) Storage.set('ai_provider', select.value);
+    
     document.getElementById('settings-dialog').close();
 }
 
@@ -1722,23 +1729,35 @@ async function generateWorkoutWithAI() {
 
     try {
         const catalogText = EXERCISE_CATALOG.map(e => `${e.name} (${e.group})`).join(', ');
+        const provider = Storage.get('ai_provider', 'openai');
+        
+        let endpoint = 'https://api.openai.com/v1/chat/completions';
+        let model = 'gpt-4o-mini';
+        const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${key}`
+        };
+
+        if (provider === 'openrouter') {
+            endpoint = 'https://openrouter.ai/api/v1/chat/completions';
+            model = 'google/gemini-flash-1.5'; // Rápido e gratuito/barato no OpenRouter
+            headers['HTTP-Referer'] = 'https://afit.app'; // Requisito OpenRouter
+            headers['X-Title'] = 'A-FIT Mobile';
+        }
         
         const systemPrompt = `Você é um Personal Trainer de elite. Monte um treino baseado no pedido do usuário.
         IMPORTANTE: Use APENAS exercícios deste catálogo: ${catalogText}.
-        Responda EXCLUSIVAMENTE em formato JSON puro, sem blocos de código markdown, seguindo exatamente este modelo:
+        Responda EXCLUSIVAMENTE em formato JSON puro, seguindo este modelo:
         {
-          "A": [{ "name": "Nome do Exercício", "sets": 3, "reps": "12" }],
+          "A": [{ "name": "Nome", "sets": 3, "reps": "12" }],
           "B": [...]
         }`;
 
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        const response = await fetch(endpoint, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${key}`
-            },
+            headers: headers,
             body: JSON.stringify({
-                model: 'gpt-4o-mini',
+                model: model,
                 messages: [
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: userPrompt }

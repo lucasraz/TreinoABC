@@ -1956,3 +1956,27 @@ header {
     background: rgba(255, 255, 255, 0.05) !important;
     color: var(--text-muted) !important;
 }
+
+#input-openai-key, #select-ai-provider {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: var(--radius-sm);
+    color: var(--text-main) !important;
+    padding: 10px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    outline: none;
+    transition: all var(--transition-fast);
+    margin-top: 5px;
+}
+
+#input-openai-key:focus, #select-ai-provider:focus {
+    border-color: #6366f1 !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+}
+
+select#select-ai-provider option {
+    background: #111118;
+    color: white;
+}

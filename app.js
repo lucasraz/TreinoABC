@@ -510,9 +510,15 @@ function renderExercises(tab) {
 
     // Botão concluir
     const finishBtn = document.createElement('button');
-    finishBtn.className = 'btn-finish';
+    finishBtn.className = 'btn-finish-premium';
     finishBtn.id = 'btn-finish';
-    finishBtn.textContent = 'Concluir Treino de Hoje 🎉';
+    finishBtn.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        <span>CONCLUIR TREINO DE HOJE</span>
+    `;
     finishBtn.addEventListener('click', finishWorkout);
     container.appendChild(finishBtn);
 

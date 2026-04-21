@@ -648,31 +648,56 @@ h1 {
     to { opacity: 1; transform: scale(1); }
 }
 
-/* --- Finish Button --- */
-.btn-finish {
+/* --- Finish Button Premium --- */
+.btn-finish-premium {
     width: 100%;
-    margin-top: 20px;
-    padding: 16px;
-    background: linear-gradient(135deg, var(--success) 0%, #16a34a 100%);
+    margin-top: 24px;
+    padding: 18px;
+    background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
     color: #fff;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-md);
-    font-size: 1rem;
-    font-weight: 700;
+    font-size: 0.95rem;
+    font-weight: 800;
     font-family: 'Inter', sans-serif;
     cursor: pointer;
     transition: all var(--transition-med);
-    box-shadow: 0 4px 16px var(--success-glow);
-    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    letter-spacing: 1px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 20px -5px rgba(34, 197, 94, 0.4);
+    text-transform: uppercase;
 }
 
-.btn-finish:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 24px var(--success-glow);
+.btn-finish-premium::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transform: rotate(45deg);
+    animation: shimmer-btn 3s infinite;
 }
 
-.btn-finish:active {
-    transform: translateY(0);
+@keyframes shimmer-btn {
+    0% { transform: rotate(45deg) translateX(-100%); }
+    100% { transform: rotate(45deg) translateX(100%); }
+}
+
+.btn-finish-premium:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px -5px rgba(34, 197, 94, 0.5);
+    background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+}
+
+.btn-finish-premium:active {
+    transform: translateY(-1px);
 }
 
 /* --- Custom Dialog (replaces alert) --- */

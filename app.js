@@ -1,5 +1,5 @@
 /**
- * AUERA FIT — App Principal
+ * AURA FIT — App Principal
  * 
  * Funcionalidades:
  * - Treinos A/B/C com tabs

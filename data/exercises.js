@@ -1,5 +1,5 @@
 /**
- * Dados dos treinos ABC — AUERA FIT
+ * Dados dos treinos ABC — AURA FIT
  * Cada exercício tem: id único, nome, grupo muscular, séries, repetições, e ID do vídeo YouTube.
  */
 const TREINOS = {

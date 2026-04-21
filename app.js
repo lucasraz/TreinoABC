@@ -111,15 +111,36 @@ function showHistoryDialog(exerciseId, exerciseName) {
 
     const entries = historyData[exerciseId] || [];
     
+    // Limpa lista anterior de forma segura
+    list.innerHTML = '';
+    
     if (entries.length === 0) {
-        list.innerHTML = '<li class="history-empty">Nenhum registro ainda.<br>Salve sua carga para começar!</li>';
+        // FIX SEGURANÇA: usa createElement em vez de innerHTML para evitar XSS
+        const li = document.createElement('li');
+        li.className = 'history-empty';
+        li.textContent = 'Nenhum registro ainda. Salve sua carga para começar!';
+        list.appendChild(li);
     } else {
-        // Mostra do mais recente para o mais antigo
-        list.innerHTML = entries
+        // FIX SEGURANÇA: usa createElement para cada entrada (e.date e e.carga não
+        // são sanitizados com innerHTML — agora usamos textContent para ambos)
+        entries
             .slice()
             .reverse()
-            .map(e => `<li><span class="history-date">${formatDate(e.date)}</span><span class="history-value">${sanitize(String(e.carga))} kg</span></li>`)
-            .join('');
+            .forEach(function(e) {
+                const li = document.createElement('li');
+                
+                const dateSpan = document.createElement('span');
+                dateSpan.className = 'history-date';
+                dateSpan.textContent = formatDate(String(e.date)); // textContent = sem XSS
+                
+                const valueSpan = document.createElement('span');
+                valueSpan.className = 'history-value';
+                valueSpan.textContent = parseFloat(e.carga).toFixed(1) + ' kg';
+                
+                li.appendChild(dateSpan);
+                li.appendChild(valueSpan);
+                list.appendChild(li);
+            });
     }
     
     dialog.showModal();
@@ -430,10 +451,13 @@ function switchTab(tab) {
 
 function saveCarga(id, value) {
     const numValue = parseFloat(value);
-    if (isNaN(numValue) || numValue < 0) return;
+    // FIX SEGURANÇA: valida range no JS (não apenas no atributo max="500" do HTML,
+    // que pode ser contornado via DevTools ou console)
+    if (isNaN(numValue) || numValue < 0 || numValue > 500) return;
 
     if (!savedData[id]) savedData[id] = {};
-    savedData[id].carga = value;
+    // FIX SEGURANÇA: salva o número validado (numValue), não a string bruta do input
+    savedData[id].carga = numValue;
     Storage.set('treino_data', savedData);
 
     // Salva no histórico (máximo 1 registro por dia por exercício)

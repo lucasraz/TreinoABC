@@ -30,6 +30,11 @@
     --shadow-glow: 0 0 20px rgba(250, 204, 21, 0.15);
     --transition-fast: 0.2s ease;
     --transition-med: 0.3s ease;
+
+    /* --- Plyr Theme Overrides --- */
+    --plyr-color-main: #facc15; /* var(--accent-color) */
+    --plyr-video-control-background-hover: #facc15;
+    --plyr-video-control-color-hover: #000;
 }
 
 /* --- Reset & Base --- */

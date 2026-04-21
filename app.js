@@ -1661,3 +1661,33 @@ function importBackup(event) {
     };
     reader.readAsText(file);
 }
+
+// ============================================
+// MÓDULO: Guia e Ajuda (Eventos)
+// ============================================
+
+function openGuide() {
+    const dialog = document.getElementById('guide-dialog');
+    if (dialog) dialog.showModal();
+}
+
+function closeGuide() {
+    const dialog = document.getElementById('guide-dialog');
+    if (dialog) dialog.close();
+}
+
+// Inicialização de eventos globais
+document.addEventListener('DOMContentLoaded', function() {
+    const helpBtn = document.getElementById('btn-help');
+    if (helpBtn) helpBtn.addEventListener('click', openGuide);
+    
+    const closeBtn = document.getElementById('guide-close-btn');
+    if (closeBtn) closeBtn.addEventListener('click', closeGuide);
+    
+    const guideDialog = document.getElementById('guide-dialog');
+    if (guideDialog) {
+        guideDialog.addEventListener('click', function(e) {
+            if (e.target === this) closeGuide();
+        });
+    }
+});

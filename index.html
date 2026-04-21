@@ -277,32 +277,6 @@
                 // Service worker registration failed silently
             });
         }
-
-        // Help/Guide events (Fora do bloco SW para garantir execução)
-        document.addEventListener('DOMContentLoaded', function() {
-            const helpBtn = document.getElementById('btn-help');
-            if (helpBtn) helpBtn.addEventListener('click', openGuide);
-            
-            const closeBtn = document.getElementById('guide-close-btn');
-            if (closeBtn) closeBtn.addEventListener('click', closeGuide);
-            
-            const guideDialog = document.getElementById('guide-dialog');
-            if (guideDialog) {
-                guideDialog.addEventListener('click', function(e) {
-                    if (e.target === this) closeGuide();
-                });
-            }
-        });
-
-        function openGuide() {
-            const dialog = document.getElementById('guide-dialog');
-            if (dialog) dialog.showModal();
-        }
-
-        function closeGuide() {
-            const dialog = document.getElementById('guide-dialog');
-            if (dialog) dialog.close();
-        }
     </script>
 </body>
 

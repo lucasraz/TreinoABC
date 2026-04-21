@@ -71,21 +71,7 @@
     </header>
 
     <nav class="tabs" id="tabs-nav">
-        <!-- Modal: Guia e Privacidade -->
-    <dialog id="guide-dialog" class="app-dialog">
-        <div class="dialog-icon">🛡️</div>
-        <h3 class="dialog-title">Guia & Privacidade</h3>
-        <div id="guide-content" class="dialog-message scrollable-content">
-            <!-- Conteúdo será preenchido via JS ou fixo -->
-            <p><strong>Privacidade Total:</strong> Seus dados nunca saem deste aparelho. Sem contas, sem rastreamento.</p>
-            <hr style="margin: 15px 0; opacity: 0.1;">
-            <p style="text-align: left; font-size: 0.85rem;">1. Use ✏️ <strong>Editar</strong> para montar seu treino.<br>
-            2. Arraste <code>⋮⋮</code> para reordenar.<br>
-            3. Veja o histórico em 📈.<br>
-            4. 🟢 <strong>Conclua</strong> para salvar seu streak!</p>
-        </div>
-        <button id="guide-close-btn" class="dialog-btn">Entendi!</button>
-    </dialog>
+        <!-- Gerado dinamicamente -->
     </nav>
 
     <!-- Action Bar -->
@@ -255,6 +241,23 @@
             <button type="button" class="btn-celebration-close" id="celeb-close-btn">Bora pra próxima!</button>
         </div>
     </dialog>
+    
+    <!-- Modal: Guia e Privacidade -->
+    <dialog id="guide-dialog" class="app-dialog">
+        <div class="dialog-icon">🛡️</div>
+        <h3 class="dialog-title">Guia & Privacidade</h3>
+        <div id="guide-content" class="dialog-message scrollable-content">
+            <p><strong>Privacidade Total:</strong> Seus dados nunca saem deste aparelho. Sem contas, sem rastreamento.</p>
+            <hr style="margin: 15px 0; opacity: 0.1;">
+            <p style="text-align: left; font-size: 0.85rem;">
+                1. Use ✏️ <strong>Editar</strong> para montar seu treino.<br>
+                2. Arraste <code>⋮⋮</code> para reordenar.<br>
+                3. Veja o histórico em 📈.<br>
+                4. 🟢 <strong>Conclua</strong> para salvar seu streak!
+            </p>
+        </div>
+        <button id="guide-close-btn" class="dialog-btn">Entendi!</button>
+    </dialog>
 
     <!-- Scripts -->
     <script src="data/exercises.js"></script>
@@ -273,22 +276,33 @@
             navigator.serviceWorker.register('sw.js').catch(function() {
                 // Service worker registration failed silently
             });
-            // Help/Guide events
-    const helpBtn = document.getElementById('btn-help');
-    if(helpBtn) helpBtn.addEventListener('click', openGuide);
-    document.getElementById('guide-close-btn').addEventListener('click', closeGuide);
-    document.getElementById('guide-dialog').addEventListener('click', function(e) {
-        if (e.target === this) closeGuide();
-    });
-}
+        }
 
-function openGuide() {
-    document.getElementById('guide-dialog').showModal();
-}
+        // Help/Guide events (Fora do bloco SW para garantir execução)
+        document.addEventListener('DOMContentLoaded', function() {
+            const helpBtn = document.getElementById('btn-help');
+            if (helpBtn) helpBtn.addEventListener('click', openGuide);
+            
+            const closeBtn = document.getElementById('guide-close-btn');
+            if (closeBtn) closeBtn.addEventListener('click', closeGuide);
+            
+            const guideDialog = document.getElementById('guide-dialog');
+            if (guideDialog) {
+                guideDialog.addEventListener('click', function(e) {
+                    if (e.target === this) closeGuide();
+                });
+            }
+        });
 
-function closeGuide() {
-    document.getElementById('guide-dialog').close();
-}
+        function openGuide() {
+            const dialog = document.getElementById('guide-dialog');
+            if (dialog) dialog.showModal();
+        }
+
+        function closeGuide() {
+            const dialog = document.getElementById('guide-dialog');
+            if (dialog) dialog.close();
+        }
     </script>
 </body>
 

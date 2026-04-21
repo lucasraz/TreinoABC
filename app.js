@@ -94,6 +94,8 @@ let currentTab = 'A';
 let timerInterval = null;
 let timerPreset = 60;
 let timeLeft = 60;
+let stopwatchTime = 0;
+let timerMode = 'timer'; // 'timer' ou 'stopwatch'
 let isRunning = false;
 
 // Video player state
@@ -553,30 +555,51 @@ function toggleCheck(id, btnElement) {
 }
 
 // ============================================
-// MÓDULO: Timer
+// MÓDULO: Timer / Cronômetro
 // ============================================
 
-function updateTimerDisplay() {
-    const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-    const s = (timeLeft % 60).toString().padStart(2, '0');
-    const display = document.getElementById('timer');
-    display.textContent = m + ':' + s;
+function switchTimerMode(mode) {
+    if (isRunning) resetTimer();
     
-    // Warning visual nos últimos 5 segundos
-    if (timeLeft <= 5 && timeLeft > 0 && isRunning) {
-        display.classList.add('warning');
-    } else {
-        display.classList.remove('warning');
+    timerMode = mode;
+    
+    // Atualiza botões de modo
+    document.getElementById('mode-timer').classList.toggle('active', mode === 'timer');
+    document.getElementById('mode-stopwatch').classList.toggle('active', mode === 'stopwatch');
+    
+    // Esconde presets se for cronômetro
+    const presets = document.getElementById('timer-presets');
+    if (presets) {
+        presets.style.display = (mode === 'timer') ? 'flex' : 'none';
+    }
+    
+    resetTimer();
+}
+
+function updateTimerDisplay() {
+    const timeToDisplay = (timerMode === 'timer') ? timeLeft : stopwatchTime;
+    const m = Math.floor(timeToDisplay / 60).toString().padStart(2, '0');
+    const s = (timeToDisplay % 60).toString().padStart(2, '0');
+    const display = document.getElementById('timer');
+    
+    if (display) {
+        display.textContent = m + ':' + s;
+        
+        // Warning visual nos últimos 5 segundos (apenas para Timer)
+        if (timerMode === 'timer' && timeLeft <= 5 && timeLeft > 0 && isRunning) {
+            display.classList.add('warning');
+        } else {
+            display.classList.remove('warning');
+        }
     }
 }
 
 function setTimerPreset(seconds) {
-    if (isRunning) return; // Não muda preset enquanto roda
+    if (isRunning || timerMode !== 'timer') return;
     timerPreset = seconds;
     timeLeft = seconds;
     updateTimerDisplay();
     
-    // Atualiza botões de preset
     document.querySelectorAll('.preset-btn').forEach(btn => {
         btn.classList.toggle('active', parseInt(btn.dataset.seconds) === seconds);
     });
@@ -586,36 +609,51 @@ function toggleTimer() {
     const btn = document.getElementById('btn-start');
     if (isRunning) {
         clearInterval(timerInterval);
+        isRunning = false;
         btn.textContent = 'Retomar';
         btn.classList.remove('stop');
     } else {
+        isRunning = true;
         btn.textContent = 'Pausar';
         btn.classList.add('stop');
+        
         timerInterval = setInterval(function() {
-            if (timeLeft > 0) {
-                timeLeft--;
-                updateTimerDisplay();
+            if (timerMode === 'timer') {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    updateTimerDisplay();
+                } else {
+                    clearInterval(timerInterval);
+                    isRunning = false;
+                    btn.textContent = 'Iniciar';
+                    btn.classList.remove('stop');
+                    playTimerSound();
+                }
             } else {
-                clearInterval(timerInterval);
-                isRunning = false;
-                playTimerSound();
-                if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-                showDialog('⏰', 'Tempo esgotado!', 'Seu descanso acabou. Hora da próxima série!');
-                resetTimer();
+                // Modo Cronômetro: conta para cima
+                stopwatchTime++;
+                updateTimerDisplay();
             }
         }, 1000);
     }
-    isRunning = !isRunning;
 }
 
 function resetTimer() {
     clearInterval(timerInterval);
     isRunning = false;
-    timeLeft = timerPreset;
-    updateTimerDisplay();
+    
+    if (timerMode === 'timer') {
+        timeLeft = timerPreset;
+    } else {
+        stopwatchTime = 0;
+    }
+    
     const btn = document.getElementById('btn-start');
-    btn.textContent = 'Iniciar';
-    btn.classList.remove('stop');
+    if (btn) {
+        btn.textContent = 'Iniciar';
+        btn.classList.remove('stop');
+    }
+    updateTimerDisplay();
 }
 
 // ============================================
@@ -1030,7 +1068,18 @@ function addFromCatalog(catalogEx) {
 function initApp() {
     checkDayReset();
     updateStatsUI();
-    updateTimerDisplay();
+    // Timer events
+    document.getElementById('btn-start').addEventListener('click', toggleTimer);
+    document.getElementById('btn-reset').addEventListener('click', resetTimer);
+    document.getElementById('mode-timer').addEventListener('click', () => switchTimerMode('timer'));
+    document.getElementById('mode-stopwatch').addEventListener('click', () => switchTimerMode('stopwatch'));
+    
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            setTimerPreset(parseInt(this.dataset.seconds));
+        });
+    });
+    
     renderExercises('A');
     
     // Marca preset padrão

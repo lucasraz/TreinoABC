@@ -48,16 +48,22 @@
             <span>🔥 Sequência: <strong id="streak-days">0</strong> dias</span>
             <span>💪 Total: <strong id="total-days">0</strong> dias</span>
         </div>
-        <div class="timer-container">
-            <span class="timer-display" id="timer">01:00</span>
-            <button class="btn-timer" id="btn-start">Iniciar</button>
-            <button class="btn-timer reset-btn" id="btn-reset">Reset</button>
-        </div>
-        <div class="timer-presets">
-            <button class="preset-btn" data-seconds="30">30s</button>
-            <button class="preset-btn active" data-seconds="60">60s</button>
-            <button class="preset-btn" data-seconds="90">90s</button>
-            <button class="preset-btn" data-seconds="120">2min</button>
+        <div class="timer-section">
+            <div class="timer-mode-selector">
+                <button class="mode-btn active" id="mode-timer">Timer</button>
+                <button class="mode-btn" id="mode-stopwatch">Cronômetro</button>
+            </div>
+            <div class="timer-container">
+                <span class="timer-display" id="timer">01:00</span>
+                <button class="btn-timer" id="btn-start">Iniciar</button>
+                <button class="btn-timer reset-btn" id="btn-reset">Reset</button>
+            </div>
+            <div class="timer-presets" id="timer-presets">
+                <button class="preset-btn" data-seconds="30">30s</button>
+                <button class="preset-btn active" data-seconds="60">60s</button>
+                <button class="preset-btn" data-seconds="90">90s</button>
+                <button class="preset-btn" data-seconds="120">2min</button>
+            </div>
         </div>
     </header>
 

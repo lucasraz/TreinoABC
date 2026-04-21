@@ -32,9 +32,19 @@
     --transition-med: 0.3s ease;
 
     /* --- Plyr Theme Overrides --- */
-    --plyr-color-main: #facc15; /* var(--accent-color) */
+    --plyr-color-main: #facc15;
     --plyr-video-control-background-hover: #facc15;
     --plyr-video-control-color-hover: #000;
+}
+
+/* --- Plyr Specific Overrides --- */
+.plyr--full-ui.plyr--video .plyr__control--overlaid {
+    background: rgba(250, 204, 21, 0.9);
+    color: #000;
+}
+
+.plyr--full-ui.plyr--video .plyr__control--overlaid svg {
+    fill: #000;
 }
 
 /* --- Reset & Base --- */

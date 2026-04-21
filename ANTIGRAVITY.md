@@ -38,9 +38,9 @@ App web para acompanhamento de treinos de musculação no formato personalizáve
 - **Dialog nativo**: Uso extensivo da API `<dialog>` para uma experiência de sistema.
 - **Rebranding v24-v28**: Transição completa de A-FIT para AURA FIT, com logotipo transparente e identidade visual premium.
 
-## Versão Atual: v34
-- [x] **Identidade Visual (Player)**: Customização do tema do Plyr para remover o azul padrão e adotar o dourado (`#facc15`) do AURA FIT em todos os controles e botões de vídeo.
-- [x] **Vídeo Playback**: Correção da execução de vídeos através da expansão da CSP e ajuste de `origin`.
+## Versão Atual: v35
+- [x] **UX (Player Contrast)**: Ajuste do contraste do botão de play no player de vídeo. Agora o ícone interno é preto sobre o fundo dourado, garantindo visibilidade total.
+- [x] **Identidade Visual (Player)**: Customização do tema do Plyr para adotar o dourado (`#facc15`) do AURA FIT.
 - [x] **Inicialização**: Consolidação do fluxo de boot do app em `initApp` para evitar conflitos de eventos.
 - [x] **Bug Fix**: Correção de erro de referência (`nameInput`) na criação de exercícios customizados.
 - [x] **Estabilidade**: Verificação de existência de elementos DOM antes de adicionar listeners.

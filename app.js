@@ -1454,7 +1454,6 @@ btnInstallCancel.addEventListener('click', () => {
 });
 
 // Oculta se o app foi instalado com sucesso
-window.addEventListener('appinstalled', () => {
     installBanner.classList.remove('show');
     deferredPrompt = null;
     console.log('PWA instalado');
@@ -1881,10 +1880,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (btnInstall) {
         btnInstall.addEventListener('click', async () => {
             if (!deferredPrompt) return;
+            // Esconde o banner assim que o usuário clica em instalar
+            if (installBanner) installBanner.classList.remove('show');
+            
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
             if (outcome === 'accepted') {
-                if (installBanner) installBanner.classList.remove('show');
+                console.log('Usuário aceitou a instalação');
             }
             deferredPrompt = null;
         });
@@ -1897,8 +1899,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     window.addEventListener('appinstalled', (event) => {
-        // Limpa o banner e avisa o usuário
+        // Limpa o banner e o prompt
         if (installBanner) installBanner.classList.remove('show');
-        showDialog('📱', 'A-FIT Instalado!', 'O app foi adicionado à sua tela de início com sucesso.');
+        deferredPrompt = null;
+        
+        // Pequeno delay de 1.5s para o SO finalizar a criação do ícone antes de avisar
+        setTimeout(() => {
+            showDialog('📱', 'AURA FIT Instalado!', 'O app foi adicionado à sua tela de início com sucesso. Bons treinos!');
+        }, 1500);
     });
 });

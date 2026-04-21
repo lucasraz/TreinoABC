@@ -67,6 +67,8 @@ Nenhuma — app 100% client-side com localStorage.
 - [x] **Exercícios customizados** (criar exercícios que não existem no catálogo)
 - [x] **Links YouTube editáveis** (colar link completo ou ID)
 - [x] **Restaurar treino padrão** (botão de reset no editor)
+- [x] **Exportar/Importar Backup** (salvar dados em .json)
+- [x] **Reordenação de exercícios** (Drag & Drop no editor)
 
 ## Decisões Arquiteturais
 1. **Single-page sem framework**: App simples, sem necessidade de React/Vue

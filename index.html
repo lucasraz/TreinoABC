@@ -67,9 +67,10 @@
         <button class="tab-btn" data-tab="C">Treino C</button>
     </nav>
 
-    <!-- Edit Workout Button -->
-    <div class="edit-bar">
-        <button class="btn-edit-workout" id="btn-edit-workout">✏️ Editar Treino</button>
+    <!-- Action Bar -->
+    <div class="edit-bar" style="display: flex; gap: 10px; padding: 0 16px;">
+        <button class="btn-edit-workout" id="btn-edit-workout" style="flex: 1;">✏️ Editar Treino</button>
+        <button class="btn-edit-workout" id="btn-settings" style="width: auto; padding: 12px 16px;">⚙️</button>
     </div>
 
     <!-- Progress Bar -->
@@ -156,6 +157,27 @@
             <button class="btn-install" id="btn-install">Instalar</button>
         </div>
     </div>
+
+    <!-- Settings / Backup Dialog -->
+    <dialog id="settings-dialog" class="custom-dialog">
+        <div class="dialog-content">
+            <h3 style="margin-top: 0;">⚙️ Configurações e Backup</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">
+                Proteja seu progresso. Faça backup dos seus treinos customizados, histórico e ofensiva antes de limpar os dados do navegador.
+            </p>
+            
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+                <button id="btn-export-backup" class="btn-primary" style="background: var(--primary);">📥 Baixar Backup (.json)</button>
+                
+                <div style="position: relative;">
+                    <input type="file" id="input-import-backup" accept=".json" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;">
+                    <button class="btn-primary" style="background: var(--surface-light); color: var(--text); width: 100%; pointer-events: none;">📤 Restaurar Backup</button>
+                </div>
+            </div>
+
+            <button id="btn-close-settings" class="btn-secondary" style="width: 100%;">Fechar</button>
+        </div>
+    </dialog>
 
     <!-- Scripts -->
     <script src="data/exercises.js"></script>

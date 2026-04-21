@@ -683,6 +683,21 @@ function renderEditorList() {
         editorWorkout.forEach(function(ex, index) {
             const item = document.createElement('li');
             item.className = 'editor-exercise-item';
+            item.draggable = true;
+            item.dataset.index = index;
+
+            // Drag handle
+            const handle = document.createElement('div');
+            handle.className = 'drag-handle';
+            handle.innerHTML = '≡';
+            item.appendChild(handle);
+            
+            // Eventos Drag & Drop
+            item.addEventListener('dragstart', handleDragStart);
+            item.addEventListener('dragover', handleDragOver);
+            item.addEventListener('dragleave', handleDragLeave);
+            item.addEventListener('drop', handleDrop);
+            item.addEventListener('dragend', handleDragEnd);
             
             // Info
             const info = document.createElement('div');
@@ -1067,6 +1082,18 @@ function initApp() {
     document.getElementById('yt-dialog').addEventListener('click', function(e) {
         if (e.target === this) { e.preventDefault(); closeYtDialog(); }
     });
+
+    // Settings / Backup events
+    const settingsBtn = document.getElementById('btn-settings');
+    if(settingsBtn) settingsBtn.addEventListener('click', openSettings);
+    
+    document.getElementById('btn-close-settings').addEventListener('click', closeSettings);
+    document.getElementById('settings-dialog').addEventListener('click', function(e) {
+        if (e.target === this) closeSettings();
+    });
+
+    document.getElementById('btn-export-backup').addEventListener('click', exportBackup);
+    document.getElementById('input-import-backup').addEventListener('change', importBackup);
 }
 
 // Inicia quando o DOM estiver pronto
@@ -1122,3 +1149,119 @@ window.addEventListener('appinstalled', () => {
     deferredPrompt = null;
     console.log('PWA instalado');
 });
+
+// ============================================
+// MÓDULO: Drag & Drop (Reordenação)
+// ============================================
+
+let draggedItemIndex = null;
+
+function handleDragStart(e) {
+    draggedItemIndex = parseInt(this.dataset.index);
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    // Firefox precisa de setData para o drag funcionar
+    e.dataTransfer.setData('text/plain', draggedItemIndex);
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    this.classList.add('drag-over');
+}
+
+function handleDragLeave() {
+    this.classList.remove('drag-over');
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    this.classList.remove('drag-over');
+    
+    const targetIndex = parseInt(this.dataset.index);
+    if (draggedItemIndex === null || draggedItemIndex === targetIndex) return;
+    
+    // Reordena o array editorWorkout
+    const itemToMove = editorWorkout.splice(draggedItemIndex, 1)[0];
+    editorWorkout.splice(targetIndex, 0, itemToMove);
+    
+    renderEditorList();
+}
+
+function handleDragEnd() {
+    this.classList.remove('dragging');
+    draggedItemIndex = null;
+    
+    // Remove qualquer classe drag-over que tenha sobrado
+    document.querySelectorAll('.editor-exercise-item').forEach(item => {
+        item.classList.remove('drag-over');
+    });
+}
+
+// ============================================
+// MÓDULO: Configurações e Backup
+// ============================================
+
+function openSettings() {
+    document.getElementById('settings-dialog').showModal();
+}
+
+function closeSettings() {
+    document.getElementById('settings-dialog').close();
+}
+
+function exportBackup() {
+    const backupData = {
+        treino_data: Storage.get('treino_data', {}),
+        treino_stats: Storage.get('treino_stats', { lastDate: null, totalDays: 0, streak: 0 }),
+        treino_history: Storage.get('treino_history', {}),
+        treino_check_date: Storage.get('treino_check_date', null),
+        custom_treinos: Storage.get('custom_treinos', null),
+        exportDate: new Date().toISOString()
+    };
+
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    
+    // Nome do arquivo com data
+    const dateStr = new Date().toISOString().split('T')[0];
+    downloadAnchorNode.setAttribute("download", `treino-abc-backup-${dateStr}.json`);
+    
+    document.body.appendChild(downloadAnchorNode); // Required for Firefox
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+}
+
+function importBackup(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            
+            // Validação básica do arquivo de backup
+            if (data && typeof data === 'object') {
+                if (data.treino_data) Storage.set('treino_data', data.treino_data);
+                if (data.treino_stats) Storage.set('treino_stats', data.treino_stats);
+                if (data.treino_history) Storage.set('treino_history', data.treino_history);
+                if (data.treino_check_date) Storage.set('treino_check_date', data.treino_check_date);
+                if (data.custom_treinos !== undefined) Storage.set('custom_treinos', data.custom_treinos);
+                
+                alert("✅ Backup restaurado com sucesso! O aplicativo será recarregado.");
+                window.location.reload();
+            } else {
+                throw new Error("Formato inválido");
+            }
+        } catch (error) {
+            alert("❌ Erro ao ler o arquivo de backup. Verifique se é um arquivo .json válido do Treino ABC.");
+            console.error("Erro no importBackup:", error);
+        }
+        
+        // Limpa o input para permitir importar o mesmo arquivo novamente se necessário
+        event.target.value = '';
+    };
+    reader.readAsText(file);
+}

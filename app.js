@@ -577,7 +577,7 @@ function toggleVideo(exId, ytId) {
         wrapper.id = 'player-' + exId;
 
         const iframe = document.createElement('iframe');
-        iframe.src = 'https://www.youtube-nocookie.com/embed/' + ytId + '?origin=https://plyr.io&iv_load_policy=3&modestbranding=1&playsinline=1&showinfo=0&rel=0&enablejsapi=1';
+        iframe.src = `https://www.youtube-nocookie.com/embed/${ytId}?origin=${encodeURIComponent(window.location.origin)}&iv_load_policy=3&modestbranding=1&playsinline=1&showinfo=0&rel=0&enablejsapi=1`;
         iframe.allowFullscreen = true;
         iframe.allow = 'autoplay';
 

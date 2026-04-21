@@ -1,88 +1,64 @@
-# 🏋️ A-FIT — Documento Vivo
+# 🏋️ AURA FIT — Documento Vivo
 
 ## Visão Geral
-App web para acompanhamento de treinos de musculação no formato ABC (Peito/Ombro/Tríceps, Costas/Bíceps/Trapézio, Pernas/Panturrilha).
+App web para acompanhamento de treinos de musculação no formato personalizável (A, AB, ABC, ABCD, ABCDE). Foco em simplicidade, privacidade e acompanhamento de cargas.
 
 ## Tech Stack
 | Tecnologia | Uso |
 |---|---|
 | HTML5 | Estrutura semântica |
-| CSS3 (Vanilla) | Estilização com variáveis CSS e animações |
-| JavaScript (Vanilla ES6+) | Lógica do app |
+| CSS3 (Vanilla) | Estilização com variáveis CSS, glassmorphism e animações |
+| JavaScript (Vanilla ES6+) | Lógica do app e gerenciamento de estado |
 | Plyr.js 3.7.8 | Player de vídeo YouTube embutido |
-| localStorage | Persistência de dados (carga, streaks, histórico, treinos customizados) |
-| PWA (Service Worker) | Instalação e uso offline |
+| localStorage | Persistência de dados (carga, streaks, histórico, treinos customizados, chaves de IA) |
+| PWA (Service Worker) | Instalação v28 e uso offline robusto |
+| OpenRouter / OpenAI | Integração com AI Coach para geração de treinos |
 
 ## Estrutura do Projeto
 ```
-/A-FIT
-├── index.html              ← Estrutura HTML
-├── styles.css              ← Estilos e animações
-├── app.js                  ← Lógica principal
+/AURA-FIT
+├── index.html              ← Estrutura HTML e metadados PWA
+├── styles.css              ← Design system (glassmorphism) e responsividade
+├── app.js                  ← Lógica principal, PWA e IA
 ├── data/
 │   ├── exercises.js        ← Dados dos treinos padrão
-│   └── exercise_catalog.js ← Catálogo de 126 exercícios
+│   └── exercise_catalog.js ← Catálogo de 126 exercícios base
 ├── tests/
-│   └── app.test.html       ← 59 testes automatizados
-├── manifest.json           ← PWA manifest
-├── sw.js                   ← Service Worker (offline)
-└── ANTIGRAVITY.md          ← Este documento
+│   └── app.test.html       ← Suite de testes automatizados
+├── manifest.json           ← Manifesto PWA v28 (AURA FIT)
+├── sw.js                   ← Service Worker v28 (Cache-first + Offline fallback)
+└── ANTIGRAVITY.md          ← Documentação viva (Tech Stack e Patterns)
 ```
 
 ## Design Patterns
-- **Separação de responsabilidades**: HTML, CSS e JS em arquivos distintos
-- **Dados desacoplados**: Exercícios em arquivo separado (`data/exercises.js`) usando campos `sets` e `reps` separados.
-- **Catálogo extenso**: 126 exercícios em 11 grupos (`data/exercise_catalog.js`)
-- **Módulo de Storage**: Funções centralizadas para ler/salvar localStorage
-- **Dialog nativo**: `<dialog>` em vez de `alert()` para notificações
-- **Default + Override**: Treinos padrão no código, customizações salvas no localStorage
+- **Separação de responsabilidades**: Arquivos distintos para estrutura, estilo e lógica.
+- **Dados desacoplados**: Exercícios e catálogos em arquivos `data/` separados.
+- **Módulo de Storage**: Wrapper para `localStorage` com tratamento de erros.
+- **Validação de Schema**: Dados do `localStorage` são validados antes do uso para evitar crashes.
+- **Dialog nativo**: Uso extensivo da API `<dialog>` para uma experiência de sistema.
+- **Rebranding v24-v28**: Transição completa de A-FIT para AURA FIT, com logotipo transparente e identidade visual premium.
 
-## Variáveis de Ambiente
-Nenhuma — app 100% client-side com localStorage.
-
-## Chaves de localStorage
-| Chave | Tipo | Descrição |
-|---|---|---|
-| `treino_data` | Object | Carga e check de cada exercício |
-| `treino_stats` | Object | Streak, total de dias, última data |
-| `treino_history` | Object | Histórico de cargas (90 dias max) |
-| `treino_check_date` | String | Data do último reset de checks |
-| `custom_treinos` | Object/null | Treinos customizados (null = usar padrão) |
+## Versão Atual: v28
+- [x] Correção de sintaxe crítica no `app.js`.
+- [x] Restauração da inicialização do app (`renderTabs`/`switchTab`).
+- [x] PWA Blindado com caminhos absolutos e escopo explícito.
+- [x] Delay no feedback de instalação para melhor UX no celular.
 
 ## Funcionalidades
-- [x] Divisões de treino dinâmicas (A, AB, ABC, ABCD, ABCDE)
-- [x] Modo Personalizado (adicionar/remover abas de treino)
-- [x] Estimativa de gasto calórico (MET) baseado no peso do usuário
-- [x] Cálculo de Volume Total (Tonelagem) por treino
-- [x] Timer de descanso configurável (presets 30/60/90/120s)
-- [x] Feedback sonoro no timer (Web Audio API)
-- [x] Salvar carga por exercício (input numérico validado)
-- [x] Histórico de evolução de cargas
-- [x] Sistema de streak (sequência de dias)
-- [x] Barra de progresso por treino
-- [x] Auto-reset de checks por dia
-- [x] Vídeos YouTube com Plyr
-- [x] Modais nativos (`<dialog>`)
-- [x] PWA instalável + offline
-- [x] Design premium (Inter font, glassmorphism, micro-animações)
-- [x] **Editor de treinos** (adicionar/remover exercícios)
-- [x] **Catálogo de 126 exercícios** organizados por grupo muscular
-- [x] **Exercícios customizados** (criar exercícios que não existem no catálogo)
-- [x] **Links YouTube editáveis** (colar link completo ou ID)
-- [x] **Restaurar treino padrão** (botão de reset no editor)
-- [x] **Exportar/Importar Backup** (salvar dados em .json)
-- [x] **Reordenação de exercícios** (Drag & Drop no editor)
-
-## Decisões Arquiteturais
-1. **Single-page sem framework**: App simples, sem necessidade de React/Vue
-2. **localStorage**: Dados ficam no dispositivo, sem backend
-3. **PWA**: Permite instalar como app nativo no celular
-4. **Plyr.js via CDN**: Player leve, sem build step
-5. **Default + Override para treinos**: TREINOS no código é o padrão; customizações ficam em `custom_treinos` no localStorage. Se o usuário nunca editou, usa o padrão.
-6. **extractYouTubeId()**: Aceita URL completa, URL curta (youtu.be) ou ID direto — flexível para qualquer formato de input
+- [x] **AI Coach**: Geração de treinos via IA (OpenRouter/OpenAI).
+- [x] **Divisões Dinâmicas**: Suporta A, AB, ABC, ABCD, ABCDE e CUSTOM.
+- [x] **Métricas de Sessão**: Cálculo de Tonelagem e Kcal estimadas.
+- [x] **Timer Integrado**: Cronômetro e Timer com sons e presets.
+- [x] **Evolução de Cargas**: Histórico visual e persistente.
+- [x] **Instalação PWA**: Funciona offline e instalável em Android/iOS.
+- [x] **Backup/Restauração**: Exportação e importação de dados em JSON.
 
 ## Segurança
-- Input de carga com `type="number"` e validação
-- Uso de `textContent` para dados dinâmicos (prevenção XSS)
-- Input de texto com `maxLength` para evitar abuse
-- Dados sensíveis: nenhum (apenas treinos pessoais)
+- **CSP (Content Security Policy)**: Rigorosa para prevenir XSS e injeção de scripts.
+- **Privacidade**: Sem backend. Dados salvos 100% no dispositivo do usuário.
+- **AI Keys**: Chaves de API salvas apenas localmente (nunca transitam por servidores do app).
+
+## Decisões Arquiteturais Recentes
+1. **PWA v28**: Uso de caminhos absolutos (`/`) para garantir que o manifesto seja aceito por todos os navegadores móveis.
+2. **Branding**: O nome AURA FIT reflete a nova identidade visual dourada/prata com logo transparente.
+3. **Robustez Offline**: O Service Worker v28 possui um fallback de navegação que redireciona para a home em caso de falha de rede.

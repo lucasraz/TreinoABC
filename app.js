@@ -1857,4 +1857,42 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const aiApplyBtn = document.getElementById('ai-apply-btn');
     if (aiApplyBtn) aiApplyBtn.addEventListener('click', applyAIWorkout);
+
+    // Lógica de Instalação PWA
+    let deferredPrompt;
+    const installBanner = document.getElementById('install-banner');
+    const btnInstall = document.getElementById('btn-install');
+    const btnCancel = document.getElementById('btn-install-cancel');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        // Previne o Chrome de mostrar o prompt automático
+        e.preventDefault();
+        deferredPrompt = e;
+        // Mostra o nosso banner customizado
+        if (installBanner) installBanner.classList.add('show');
+    });
+
+    if (btnInstall) {
+        btnInstall.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                if (installBanner) installBanner.classList.remove('show');
+            }
+            deferredPrompt = null;
+        });
+    }
+
+    if (btnCancel) {
+        btnCancel.addEventListener('click', () => {
+            if (installBanner) installBanner.classList.remove('show');
+        });
+    }
+
+    window.addEventListener('appinstalled', (event) => {
+        // Limpa o banner e avisa o usuário
+        if (installBanner) installBanner.classList.remove('show');
+        showDialog('📱', 'A-FIT Instalado!', 'O app foi adicionado à sua tela de início com sucesso.');
+    });
 });

@@ -1443,26 +1443,103 @@ h1 {
     cursor: grabbing;
 }
 
-.editor-exercise-item {
+.editor-exercise-item-card {
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    margin-bottom: 12px;
+    transition: all var(--transition-fast);
+    gap: 12px;
+}
+
+.editor-exercise-item-card:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.5);
+}
+
+.editor-card-header {
     display: flex;
     align-items: center;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    gap: 12px;
+    width: 100%;
+}
+
+.editor-card-header .editor-ex-name {
+    flex: 1;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1.3;
+}
+
+.editor-card-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 8px 12px;
     border-radius: var(--radius-sm);
-    padding: 12px;
-    margin-bottom: 8px;
+}
+
+.input-group-mini {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+}
+
+.input-group-mini span {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.editor-mini-input {
+    width: 100%;
+    max-width: 60px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    padding: 4px 6px;
+    color: var(--accent-color);
+    font-weight: 700;
+    font-family: inherit;
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.editor-mini-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-edit-yt-mini {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
     transition: all var(--transition-fast);
 }
 
-.editor-exercise-item:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.12);
+.btn-edit-yt-mini:hover {
+    background: rgba(255, 255, 255, 0.12);
+    transform: scale(1.1);
 }
 
-.editor-exercise-item.dragging {
+.editor-exercise-item-card.dragging {
     opacity: 0.5;
     background: rgba(250, 204, 21, 0.1);
     border: 1px dashed var(--accent-color);
+    transform: scale(0.98);
 }
 
 .btn-reset-defaults:hover {

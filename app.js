@@ -856,97 +856,90 @@ function renderEditorList() {
         
         editorWorkout.forEach(function(ex, index) {
             const item = document.createElement('li');
-            item.className = 'editor-exercise-item';
+            item.className = 'editor-exercise-item-card';
             item.draggable = true;
             item.dataset.index = index;
 
-            // Drag handle
+            // Header Row: Handle + Name + Remove
+            const headerRow = document.createElement('div');
+            headerRow.className = 'editor-card-header';
+
             const handle = document.createElement('div');
             handle.className = 'drag-handle';
-            handle.innerHTML = '≡';
-            item.appendChild(handle);
-            
-            // Eventos Drag & Drop
-            item.addEventListener('dragstart', handleDragStart);
-            item.addEventListener('dragover', handleDragOver);
-            item.addEventListener('dragleave', handleDragLeave);
-            item.addEventListener('drop', handleDrop);
-            item.addEventListener('dragend', handleDragEnd);
-            
-            // Info
-            const info = document.createElement('div');
-            info.className = 'editor-ex-info';
+            handle.innerHTML = '⋮⋮'; // Símbolo de "grab" mais moderno
             
             const name = document.createElement('div');
             name.className = 'editor-ex-name';
             name.textContent = ex.name;
-            
-            const ytInfo = document.createElement('div');
-            if (ex.yt_id) {
-                ytInfo.className = 'editor-ex-yt';
-                ytInfo.textContent = '🎥 ' + ex.yt_id;
-            } else {
-                ytInfo.className = 'editor-ex-yt no-video';
-                ytInfo.textContent = 'Sem vídeo';
-            }
-            
-            info.appendChild(name);
-            info.appendChild(ytInfo);
-            
-            // Sets & Reps inputs (Container)
-            const inputsWrap = document.createElement('div');
-            inputsWrap.className = 'editor-inputs-wrap';
 
-            const setsInput = document.createElement('input');
-            setsInput.type = 'number';
-            setsInput.className = 'editor-sets-input';
-            setsInput.value = ex.sets || '';
-            setsInput.placeholder = 'Sets';
-            setsInput.title = 'Séries';
-            setsInput.addEventListener('change', function() {
-                editorWorkout[index].sets = parseInt(this.value) || 0;
-            });
-
-            const repsInput = document.createElement('input');
-            repsInput.type = 'text';
-            repsInput.className = 'editor-reps-input';
-            repsInput.value = ex.reps || '';
-            repsInput.placeholder = 'Reps';
-            repsInput.title = 'Repetições';
-            repsInput.addEventListener('change', function() {
-                editorWorkout[index].reps = this.value;
-            });
-
-            inputsWrap.appendChild(setsInput);
-            inputsWrap.appendChild(repsInput);
-            
-            // Edit YT button
-            const btnEditYt = document.createElement('button');
-            btnEditYt.type = 'button';
-            btnEditYt.className = 'btn-edit-yt';
-            btnEditYt.textContent = '🎥';
-            btnEditYt.title = 'Editar link YouTube';
-            btnEditYt.addEventListener('click', function(e) {
-                e.preventDefault();
-                openYtEditor(index);
-            });
-            
-            // Remove button
             const btnRemove = document.createElement('button');
             btnRemove.type = 'button';
             btnRemove.className = 'btn-remove-ex';
             btnRemove.textContent = '✕';
-            btnRemove.title = 'Remover exercício';
             btnRemove.addEventListener('click', function(e) {
                 e.preventDefault();
                 editorWorkout.splice(index, 1);
                 renderEditorList();
             });
-            
-            item.appendChild(info);
-            item.appendChild(inputsWrap);
-            item.appendChild(btnEditYt);
-            item.appendChild(btnRemove);
+
+            headerRow.appendChild(handle);
+            headerRow.appendChild(name);
+            headerRow.appendChild(btnRemove);
+
+            // Controls Row: Sets + Reps + Video
+            const controlsRow = document.createElement('div');
+            controlsRow.className = 'editor-card-controls';
+
+            const setsGroup = document.createElement('div');
+            setsGroup.className = 'input-group-mini';
+            const setsLabel = document.createElement('span');
+            setsLabel.textContent = 'Séries:';
+            const setsInput = document.createElement('input');
+            setsInput.type = 'number';
+            setsInput.className = 'editor-mini-input';
+            setsInput.value = ex.sets || '';
+            setsInput.addEventListener('change', function() {
+                editorWorkout[index].sets = parseInt(this.value) || 0;
+            });
+            setsGroup.appendChild(setsLabel);
+            setsGroup.appendChild(setsInput);
+
+            const repsGroup = document.createElement('div');
+            repsGroup.className = 'input-group-mini';
+            const repsLabel = document.createElement('span');
+            repsLabel.textContent = 'Reps:';
+            const repsInput = document.createElement('input');
+            repsInput.type = 'text';
+            repsInput.className = 'editor-mini-input';
+            repsInput.value = ex.reps || '';
+            repsInput.addEventListener('change', function() {
+                editorWorkout[index].reps = this.value;
+            });
+            repsGroup.appendChild(repsLabel);
+            repsGroup.appendChild(repsInput);
+
+            const btnEditYt = document.createElement('button');
+            btnEditYt.type = 'button';
+            btnEditYt.className = 'btn-edit-yt-mini';
+            btnEditYt.innerHTML = ex.yt_id ? '📹' : '➕📹';
+            btnEditYt.addEventListener('click', function(e) {
+                e.preventDefault();
+                openYtEditor(index);
+            });
+
+            controlsRow.appendChild(setsGroup);
+            controlsRow.appendChild(repsGroup);
+            controlsRow.appendChild(btnEditYt);
+
+            // Eventos Drag & Drop (aplicados ao card inteiro)
+            item.addEventListener('dragstart', handleDragStart);
+            item.addEventListener('dragover', handleDragOver);
+            item.addEventListener('dragleave', handleDragLeave);
+            item.addEventListener('drop', handleDrop);
+            item.addEventListener('dragend', handleDragEnd);
+
+            item.appendChild(headerRow);
+            item.appendChild(controlsRow);
             list.appendChild(item);
         });
         

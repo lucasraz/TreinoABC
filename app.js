@@ -361,6 +361,13 @@ function updateProgress() {
     if (fill) fill.style.width = percent + '%';
     if (text) text.textContent = `${done}/${total} exercícios — ${percent}%`;
 
+    // Atualiza métricas de sessão (calorias e volume) em tempo real
+    const metrics = calculateWorkoutMetrics(currentTab);
+    const kcalEl = document.getElementById('session-kcal');
+    const volEl = document.getElementById('session-volume');
+    if (kcalEl) kcalEl.textContent = metrics.calories;
+    if (volEl) volEl.textContent = metrics.volume.toLocaleString();
+
     // Dispara celebração se atingir 100%
     if (percent === 100 && total > 0) {
         // Pequeno delay para a barra completar visualmente primeiro
@@ -710,6 +717,9 @@ function setTimerPreset(seconds) {
     document.querySelectorAll('.preset-btn').forEach(btn => {
         btn.classList.toggle('active', parseInt(btn.dataset.seconds) === seconds);
     });
+
+    // Recalcula métricas se o tempo de descanso mudar
+    updateProgress();
 }
 
 function toggleTimer() {
@@ -1246,6 +1256,7 @@ function initApp() {
             if (!isNaN(val) && val >= 20 && val <= 300) {
                 userWeight = val;
                 Storage.set('user_weight', userWeight);
+                updateProgress(); // Recalcula com o novo peso
             }
         });
     }

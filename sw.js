@@ -5,7 +5,7 @@
  * Network-first para CDN (Plyr, fontes).
  */
 
-const CACHE_NAME = 'treino-abc-v20';
+const CACHE_NAME = 'treino-abc-v21';
 const LOCAL_ASSETS = [
     '/',
     '/index.html',
@@ -14,7 +14,8 @@ const LOCAL_ASSETS = [
     '/data/exercises.js',
     '/data/exercise_catalog.js',
     '/manifest.json',
-    '/logo.png'
+    '/icon-192.png',
+    '/icon-512.png'
 ];
 
 // Install: cache local assets

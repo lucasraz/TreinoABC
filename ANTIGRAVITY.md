@@ -1,4 +1,4 @@
-# 🏋️ Treino ABC — Documento Vivo
+# 🏋️ A-FIT — Documento Vivo
 
 ## Visão Geral
 App web para acompanhamento de treinos de musculação no formato ABC (Peito/Ombro/Tríceps, Costas/Bíceps/Trapézio, Pernas/Panturrilha).
@@ -15,7 +15,7 @@ App web para acompanhamento de treinos de musculação no formato ABC (Peito/Omb
 
 ## Estrutura do Projeto
 ```
-/Treino ABC
+/A-FIT
 ├── index.html              ← Estrutura HTML
 ├── styles.css              ← Estilos e animações
 ├── app.js                  ← Lógica principal

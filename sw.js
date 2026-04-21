@@ -1,5 +1,5 @@
 /**
- * Service Worker — Treino ABC
+ * Service Worker — A-FIT
  * 
  * Cache-first strategy para assets locais.
  * Network-first para CDN (Plyr, fontes).

@@ -1,5 +1,5 @@
 /**
- * Treino ABC — App Principal
+ * A-FIT — App Principal
  * 
  * Funcionalidades:
  * - Treinos A/B/C com tabs
@@ -1408,7 +1408,7 @@ function importBackup(event) {
                 throw new Error("Formato inválido");
             }
         } catch (error) {
-            alert("❌ Erro ao ler o arquivo de backup. Verifique se é um arquivo .json válido do Treino ABC.");
+            alert("❌ Erro ao ler o arquivo de backup. Verifique se é um arquivo .json válido do A-FIT.");
             console.error("Erro no importBackup:", error);
         }
         

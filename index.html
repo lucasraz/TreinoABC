@@ -7,7 +7,7 @@
     <meta name="description" content="AURA FIT: App de treino ABC para musculação. Acompanhe seus exercícios, cargas e evolução.">
     <meta name="theme-color" content="#0a0a0c">
     
-    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="icon" type="image/png" href="/logo.png">
     <title>AURA FIT</title>
 
     <!-- Segurança: Content Security Policy -->
@@ -17,14 +17,14 @@
         style-src 'self' https://fonts.googleapis.com https://cdn.plyr.io 'unsafe-inline';
         font-src https://fonts.gstatic.com;
         frame-src https://www.youtube-nocookie.com;
-        connect-src 'self';
+        connect-src 'self' https://openrouter.ai https://api.openai.com;
         img-src 'self' data: https:;
         media-src 'self';
     ">
 
     <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json?v=27">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="manifest" href="/manifest.json?v=28">
+    <link rel="apple-touch-icon" href="/icon-192.png">
 
     <!-- Plyr CSS -->
     <link
@@ -34,14 +34,14 @@
         crossorigin="anonymous">
 
     <!-- App CSS -->
-    <link rel="stylesheet" href="styles.css?v=27">
+    <link rel="stylesheet" href="/styles.css?v=28">
 </head>
 
 <body>
 
     <header>
         <div class="header-main">
-            <img src="logo.png" alt="AURA FIT" class="logo-img" style="height: 32px; width: auto;">
+            <img src="/logo.png" alt="AURA FIT" class="logo-img" style="height: 32px; width: auto;">
             <h1 class="logo">AURA FIT</h1>
             <button id="btn-help" class="btn-help" title="Guia e Privacidade">?</button>
         </div>
@@ -167,7 +167,7 @@
     <div id="install-banner" class="install-banner">
         <div class="install-info">
             <div class="install-icon" style="background: none; padding: 0;">
-                <img src="logo.png" alt="AURA FIT" style="width: 50px; height: 50px; border-radius: 12px; object-fit: cover;">
+                <img src="/logo.png" alt="AURA FIT" style="width: 50px; height: 50px; border-radius: 12px; object-fit: cover;">
             </div>
             <div>
                 <strong>Instalar AURA FIT</strong>
@@ -303,19 +303,19 @@
     </dialog>
 
     <!-- Scripts -->
-    <script src="data/exercises.js"></script>
-    <script src="data/exercise_catalog.js"></script>
+    <script src="/data/exercises.js"></script>
+    <script src="/data/exercise_catalog.js"></script>
     <script
         src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"
         integrity="sha384-5sFtjkYC6dakcOUFuxVZ++Jv0U/CI+tM55PY+p/wi9vBpjvgY8/FTbDb5DRFMdqb"
         crossorigin="anonymous">
     </script>
-    <script src="app.js?v=27"></script>
+    <script src="/app.js?v=28"></script>
 
     <!-- PWA Registration -->
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js?v=27').catch(() => {});
+            navigator.serviceWorker.register('/sw.js?v=28').catch(() => {});
         }
     </script>
 </body>

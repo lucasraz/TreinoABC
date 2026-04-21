@@ -1453,11 +1453,7 @@ btnInstallCancel.addEventListener('click', () => {
     installBanner.classList.remove('show');
 });
 
-// Oculta se o app foi instalado com sucesso
-    installBanner.classList.remove('show');
-    deferredPrompt = null;
-    console.log('PWA instalado');
-});
+
 
 // ============================================
 // MÓDULO: Drag & Drop (Reordenação)

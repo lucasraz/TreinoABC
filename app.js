@@ -1,5 +1,5 @@
 /**
- * A-FIT — App Principal
+ * AUERA FIT — App Principal
  * 
  * Funcionalidades:
  * - Treinos A/B/C com tabs
@@ -391,16 +391,22 @@ function renderExercises(tab) {
         
         const groups = new Set();
         exercises.forEach(ex => {
-            if (ex.group) {
-                groups.add(ex.group.toUpperCase());
-            } else if (typeof EXERCISE_CATALOG !== 'undefined') {
+            // Tenta pegar o grupo direto do exercício ou do catálogo
+            let g = ex.group;
+            if (!g && typeof EXERCISE_CATALOG !== 'undefined') {
                 const catalogEx = EXERCISE_CATALOG.find(c => c.name === ex.name);
-                if (catalogEx) groups.add(catalogEx.group.toUpperCase());
+                if (catalogEx) g = catalogEx.group;
+            }
+            
+            if (g) {
+                groups.add(g.charAt(0).toUpperCase() + g.slice(1).toLowerCase());
             }
         });
 
         if (groups.size > 0) {
             label.textContent = Array.from(groups).join(' / ');
+        } else if (typeof TREINO_LABELS !== 'undefined' && TREINO_LABELS[tab]) {
+            label.textContent = TREINO_LABELS[tab];
         } else {
             label.textContent = `Treino ${tab}`;
         }

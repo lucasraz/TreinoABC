@@ -383,11 +383,27 @@ function renderExercises(tab) {
     const container = document.getElementById('content');
     container.innerHTML = '';
     
-    // Atualiza label do treino
+    // Atualiza label do treino dinamicamente
     const label = document.getElementById('treino-label');
     if (label) {
-        // Se houver labels pré-definidos, usa; senão usa apenas o nome da tab
-        label.textContent = (typeof TREINO_LABELS !== 'undefined' && TREINO_LABELS[tab]) ? TREINO_LABELS[tab] : `Treino ${tab}`;
+        const workouts = getActiveWorkouts();
+        const exercises = workouts[tab] || [];
+        
+        const groups = new Set();
+        exercises.forEach(ex => {
+            if (ex.group) {
+                groups.add(ex.group.toUpperCase());
+            } else if (typeof EXERCISE_CATALOG !== 'undefined') {
+                const catalogEx = EXERCISE_CATALOG.find(c => c.name === ex.name);
+                if (catalogEx) groups.add(catalogEx.group.toUpperCase());
+            }
+        });
+
+        if (groups.size > 0) {
+            label.textContent = Array.from(groups).join(' / ');
+        } else {
+            label.textContent = `Treino ${tab}`;
+        }
     }
 
     const workouts = getActiveWorkouts();
@@ -1219,6 +1235,7 @@ function addFromCatalog(catalogEx) {
     editorWorkout.push({
         id: generateExerciseId(),
         name: catalogEx.name,
+        group: catalogEx.group, // Salva o grupo muscular
         sets: 3,
         reps: '12',
         yt_id: ''

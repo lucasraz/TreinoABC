@@ -5,7 +5,7 @@
  * Network-first para CDN (Plyr, fontes).
  */
 
-const CACHE_NAME = 'treino-abc-v8';
+const CACHE_NAME = 'treino-abc-v9';
 const LOCAL_ASSETS = [
     '/',
     '/index.html',

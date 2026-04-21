@@ -4,11 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="AUERA FIT: App de treino ABC para musculação. Acompanhe seus exercícios, cargas e evolução.">
+    <meta name="description" content="AURA FIT: App de treino ABC para musculação. Acompanhe seus exercícios, cargas e evolução.">
     <meta name="theme-color" content="#0a0a0c">
     
     <link rel="icon" type="image/png" href="logo.png">
-    <title>AUERA FIT</title>
+    <title>AURA FIT</title>
 
     <!-- Segurança: Content Security Policy -->
     <meta http-equiv="Content-Security-Policy" content="
@@ -23,8 +23,8 @@
     ">
 
     <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json?v=23">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="manifest" href="/manifest.json?v=25">
+    <link rel="apple-touch-icon" href="/icon-192.png">
 
     <!-- Plyr CSS -->
     <link
@@ -34,15 +34,15 @@
         crossorigin="anonymous">
 
     <!-- App CSS -->
-    <link rel="stylesheet" href="styles.css?v=23">
+    <link rel="stylesheet" href="styles.css?v=25">
 </head>
 
 <body>
 
     <header>
         <div class="header-main">
-            <img src="logo.png" alt="AUERA FIT" class="logo-img" style="height: 32px; width: auto;">
-            <h1 class="logo">AUERA FIT</h1>
+            <img src="logo.png" alt="AURA FIT" class="logo-img" style="height: 32px; width: auto;">
+            <h1 class="logo">AURA FIT</h1>
             <button id="btn-help" class="btn-help" title="Guia e Privacidade">?</button>
         </div>
         <div id="treino-label" class="treino-label">Carregando treino...</div>
@@ -167,7 +167,7 @@
     <div id="install-banner" class="install-banner">
         <div class="install-info">
             <div class="install-icon" style="background: none; padding: 0;">
-                <img src="logo.png" alt="AURA FIT" style="width: 50px; height: 50px; border-radius: 12px; object-fit: cover;">
+                <img src="/logo.png" alt="AURA FIT" style="width: 50px; height: 50px; border-radius: 12px; object-fit: cover;">
             </div>
             <div>
                 <strong>Instalar AURA FIT</strong>
@@ -284,7 +284,7 @@
     <!-- Modal: AI Coach -->
     <dialog id="ai-coach-dialog" class="app-dialog">
         <div class="dialog-icon">🤖</div>
-        <h3 class="dialog-title">AUERA FIT AI Coach</h3>
+        <h3 class="dialog-title">AURA FIT AI Coach</h3>
         <div id="ai-coach-content" class="dialog-message scrollable-content">
             <p style="font-size: 0.85rem; margin-bottom: 15px; opacity: 0.8;">
                 Gere treinos personalizados usando modelos avançados. Configure sua chave em 💾 <strong>Backup</strong>.
@@ -303,19 +303,19 @@
     </dialog>
 
     <!-- Scripts -->
-    <script src="data/exercises.js"></script>
-    <script src="data/exercise_catalog.js"></script>
+    <script src="/data/exercises.js"></script>
+    <script src="/data/exercise_catalog.js"></script>
     <script
         src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"
         integrity="sha384-5sFtjkYC6dakcOUFuxVZ++Jv0U/CI+tM55PY+p/wi9vBpjvgY8/FTbDb5DRFMdqb"
         crossorigin="anonymous">
     </script>
-    <script src="app.js?v=23"></script>
+    <script src="/app.js?v=25"></script>
 
     <!-- PWA Registration -->
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js?v=23').catch(() => {});
+            navigator.serviceWorker.register('/sw.js?v=25').catch(() => {});
         }
     </script>
 </body>

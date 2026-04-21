@@ -52,6 +52,8 @@ Nenhuma — app 100% client-side com localStorage.
 ## Funcionalidades
 - [x] Divisões de treino dinâmicas (A, AB, ABC, ABCD, ABCDE)
 - [x] Modo Personalizado (adicionar/remover abas de treino)
+- [x] Estimativa de gasto calórico (MET) baseado no peso do usuário
+- [x] Cálculo de Volume Total (Tonelagem) por treino
 - [x] Timer de descanso configurável (presets 30/60/90/120s)
 - [x] Feedback sonoro no timer (Web Audio API)
 - [x] Salvar carga por exercício (input numérico validado)

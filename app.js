@@ -88,6 +88,7 @@ const _rawCustomTreinos = Storage.get('custom_treinos', null);
 let customTreinos = isValidCustomTreinos(_rawCustomTreinos) ? _rawCustomTreinos : null;
 
 let splitType = Storage.get('split_type', 'ABC');
+let userWeight = Storage.get('user_weight', 75); // Fallback para 75kg se não definido
 let currentTab = 'A';
 
 // Timer state
@@ -259,6 +260,52 @@ function updateStatsUI() {
     document.getElementById('total-days').textContent = statsData.totalDays;
 }
 
+/**
+ * Busca o MET de um exercício pelo nome no catálogo.
+ */
+function getExerciseMET(name) {
+    const found = EXERCISE_CATALOG.find(ex => ex.name === name);
+    return found ? found.met : 3.5; // Default moderado
+}
+
+/**
+ * Calcula calorias e volume total do treino atual.
+ */
+function calculateWorkoutMetrics(tab) {
+    const workouts = getActiveWorkouts();
+    const exercises = workouts[tab] || [];
+    let totalCalories = 0;
+    let totalVolume = 0;
+
+    exercises.forEach(ex => {
+        const data = savedData[ex.id];
+        if (data && data.checked) {
+            const met = getExerciseMET(ex.name);
+            const sets = parseInt(ex.sets) || 3;
+            const repsStr = String(ex.reps || '10').split('-')[0];
+            const reps = parseInt(repsStr) || 10;
+            const carga = parseFloat(data.carga) || 0;
+
+            // Estimativa de tempo: cada set dura ~40 seg, mais o tempo de descanso
+            const timePerSet = 40;
+            const restTime = timerPreset || 60;
+            const durationInSeconds = sets * (timePerSet + restTime);
+            
+            // kcal = MET * peso * (segundos / 3600)
+            const kcal = met * userWeight * (durationInSeconds / 3600);
+            totalCalories += kcal;
+
+            // Volume = Carga * Séries * Repetições
+            totalVolume += carga * sets * reps;
+        }
+    });
+
+    return {
+        calories: Math.round(totalCalories),
+        volume: Math.round(totalVolume)
+    };
+}
+
 function finishWorkout() {
     const today = getTodayDate();
     
@@ -288,7 +335,13 @@ function finishWorkout() {
     Storage.set('treino_stats', statsData);
     updateStatsUI();
     
-    showDialog('🎉', 'Treino concluído!', `Parabéns! Você treinou ${statsData.totalDays} dias no total. Sequência atual: ${statsData.streak} dias!`);
+    const metrics = calculateWorkoutMetrics(currentTab);
+    const summary = `Parabéns! Você treinou ${statsData.totalDays} dias no total.\n\n` +
+                    `🔥 Gasto estimado: ~${metrics.calories} kcal\n` +
+                    `🏋️ Volume total: ${metrics.volume.toLocaleString()} kg\n\n` +
+                    `Sequência atual: ${statsData.streak} dias!`;
+    
+    showDialog('🎉', 'Treino concluído!', summary);
 }
 
 // ============================================
@@ -1184,6 +1237,19 @@ function initApp() {
         });
     });
     
+    // --- Input de Peso Corporal ---
+    const inputWeight = document.getElementById('input-weight');
+    if (inputWeight) {
+        inputWeight.value = userWeight;
+        inputWeight.addEventListener('change', (e) => {
+            const val = parseFloat(e.target.value);
+            if (!isNaN(val) && val >= 20 && val <= 300) {
+                userWeight = val;
+                Storage.set('user_weight', userWeight);
+            }
+        });
+    }
+
     renderTabs();
     renderExercises(currentTab);
     

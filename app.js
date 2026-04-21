@@ -1723,7 +1723,7 @@ function closeAICoach() {
 async function generateWorkoutWithAI() {
     const key = Storage.get('openai_api_key', '');
     if (!key) {
-        showDialog('⚠️', 'Chave Faltando', 'Por favor, configure sua OpenAI API Key nas configurações primeiro.');
+        showDialog('⚠️', 'Chave Faltando', 'Por favor, configure sua API Key nas configurações primeiro.');
         return;
     }
 
@@ -1742,20 +1742,6 @@ async function generateWorkoutWithAI() {
         const catalogText = EXERCISE_CATALOG.map(e => `${e.name} (${e.group})`).join(', ');
         const provider = Storage.get('ai_provider', 'openai');
         
-        let endpoint = 'https://api.openai.com/v1/chat/completions';
-        let model = 'gpt-4o-mini';
-        const headers = {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${key}`
-        };
-
-        if (provider === 'openrouter') {
-            endpoint = 'https://openrouter.ai/api/v1/chat/completions';
-            model = 'google/gemini-flash-1.5'; // Rápido e gratuito/barato no OpenRouter
-            headers['HTTP-Referer'] = 'https://afit.app'; // Requisito OpenRouter
-            headers['X-Title'] = 'AURA FIT Mobile';
-        }
-        
         const systemPrompt = `Você é um Personal Trainer de elite. Monte um treino baseado no pedido do usuário.
         IMPORTANTE: Use APENAS exercícios deste catálogo: ${catalogText}.
         Responda EXCLUSIVAMENTE em formato JSON puro, seguindo este modelo:
@@ -1764,31 +1750,103 @@ async function generateWorkoutWithAI() {
           "B": [...]
         }`;
 
+        let endpoint = '';
+        let headers = { 'Content-Type': 'application/json' };
+        let body = {};
+
+        switch (provider) {
+            case 'openai':
+                endpoint = 'https://api.openai.com/v1/chat/completions';
+                headers['Authorization'] = `Bearer ${key}`;
+                body = {
+                    model: 'gpt-4o-mini',
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: userPrompt }
+                    ],
+                    temperature: 0.7
+                };
+                break;
+
+            case 'anthropic':
+                endpoint = 'https://api.anthropic.com/v1/messages';
+                headers['x-api-key'] = key;
+                headers['anthropic-version'] = '2023-06-01';
+                headers['anthropic-dangerously-allow-it-external-helper-access'] = 'true'; // Para browsers
+                body = {
+                    model: 'claude-3-haiku-20240307',
+                    max_tokens: 1024,
+                    system: systemPrompt,
+                    messages: [{ role: 'user', content: userPrompt }]
+                };
+                break;
+
+            case 'gemini':
+                endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`;
+                body = {
+                    contents: [{
+                        parts: [{ text: systemPrompt + "\n\nUsuário pediu: " + userPrompt }]
+                    }]
+                };
+                break;
+
+            case 'groq':
+                endpoint = 'https://api.groq.com/openai/v1/chat/completions';
+                headers['Authorization'] = `Bearer ${key}`;
+                body = {
+                    model: 'llama-3.1-70b-versatile',
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: userPrompt }
+                    ]
+                };
+                break;
+
+            case 'openrouter':
+                endpoint = 'https://openrouter.ai/api/v1/chat/completions';
+                headers['Authorization'] = `Bearer ${key}`;
+                headers['HTTP-Referer'] = 'https://afit.app';
+                headers['X-Title'] = 'AURA FIT Mobile';
+                body = {
+                    model: 'google/gemini-flash-1.5',
+                    messages: [
+                        { role: 'system', content: systemPrompt },
+                        { role: 'user', content: userPrompt }
+                    ]
+                };
+                break;
+        }
+
         const response = await fetch(endpoint, {
             method: 'POST',
             headers: headers,
-            body: JSON.stringify({
-                model: model,
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: userPrompt }
-                ],
-                temperature: 0.7
-            })
+            body: JSON.stringify(body)
         });
 
-        const data = await response.json();
-        if (data.error) throw new Error(data.error.message);
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error?.message || `Erro HTTP ${response.status}`);
+        }
 
-        // Limpa possíveis marcações de markdown se a IA ignorar o comando
-        let content = data.choices[0].message.content.trim();
+        const data = await response.json();
+        let content = '';
+
+        // Extração do conteúdo baseada no provedor
+        if (provider === 'gemini') {
+            content = data.candidates[0].content.parts[0].text;
+        } else if (provider === 'anthropic') {
+            content = data.content[0].text;
+        } else {
+            content = data.choices[0].message.content;
+        }
+
+        content = content.trim();
         if (content.startsWith('```')) {
             content = content.replace(/```json|```/g, '').trim();
         }
 
         aiGeneratedWorkout = JSON.parse(content);
         
-        // Exibir preview simples
         status.textContent = "✅ Treino gerado com sucesso!";
         let previewHtml = '<strong>Preview do Treino:</strong><br><br>';
         for (const tab in aiGeneratedWorkout) {

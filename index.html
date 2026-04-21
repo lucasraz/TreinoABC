@@ -7,7 +7,7 @@
     <meta name="description" content="A-FIT: App de treino ABC para musculação. Acompanhe seus exercícios, cargas e evolução.">
     <meta name="theme-color" content="#0a0a0c">
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" type="image/svg+xml" href="icon-512.svg">
+    <link rel="icon" type="image/png" href="logo.png">
     <title>A-FIT</title>
 
     <!-- Segurança: Content Security Policy -->
@@ -26,7 +26,7 @@
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon-192.svg">
+    <link rel="apple-touch-icon" href="logo.png">
 
     <!-- Plyr CSS — SRI garante que o arquivo não foi adulterado no CDN -->
     <link
@@ -43,6 +43,7 @@
 
     <header>
         <div class="header-main">
+            <img src="logo.png" alt="A-FIT" class="logo-img" style="height: 32px; border-radius: 6px;">
             <h1 class="logo">A-FIT</h1>
             <button id="btn-help" class="btn-help" title="Guia e Privacidade">?</button>
         </div>
@@ -167,7 +168,9 @@
     <!-- PWA Install Banner -->
     <div id="install-banner" class="install-banner">
         <div class="install-info">
-            <span class="install-icon">🏋️</span>
+            <div class="install-icon" style="background: none; padding: 0;">
+                <img src="logo.png" alt="A-FIT" style="width: 50px; height: 50px; border-radius: 12px; object-fit: cover;">
+            </div>
             <div>
                 <strong>Instalar A-FIT</strong>
                 <p>Acesso rápido e offline!</p>

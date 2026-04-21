@@ -77,11 +77,11 @@
     <!-- Action Bar -->
     <div class="action-bar">
         <button class="action-btn btn-edit" id="btn-edit-workout">
-            <span class="action-icon">✏️</span>
-            <span class="action-text">Editar</span>
+            <span class="action-icon">🛠️</span>
+            <span class="action-text">Treino</span>
         </button>
         <button class="action-btn btn-ai-coach" id="btn-ai-coach">
-            <span class="action-icon">🤖</span>
+            <span class="action-icon">✨</span>
             <span class="action-text">AI Coach</span>
         </button>
         <button class="action-btn btn-settings" id="btn-settings" title="Configurações">
@@ -266,10 +266,13 @@
         <div id="guide-content" class="dialog-message scrollable-content">
             <p><strong>Privacidade Total:</strong> Seus dados nunca saem deste aparelho. Sem contas, sem rastreamento.</p>
             <hr style="margin: 15px 0; opacity: 0.1;">
+            <p style="text-align: left; font-size: 0.85rem; margin-bottom: 10px;">
+                <strong>Sobre a IA:</strong> Ao usar o AI Coach, sua <em>OpenAI API Key</em> é salva apenas no seu navegador. O app se comunica diretamente com a OpenAI; não temos servidores intermediários e nunca vemos sua chave ou seus treinos.
+            </p>
             <p style="text-align: left; font-size: 0.85rem;">
-                1. Use ✏️ <strong>Editar</strong> para montar seu treino.<br>
-                2. Arraste <code>⋮⋮</code> para reordenar.<br>
-                3. Veja o histórico em 📈.<br>
+                1. Use 🛠️ <strong>Treino</strong> para montar manualmente.<br>
+                2. Use ✨ <strong>AI Coach</strong> para gerar treinos via IA.<br>
+                3. Arraste <code>⋮⋮</code> para reordenar.<br>
                 4. 🟢 <strong>Conclua</strong> para salvar seu streak!
             </p>
         </div>
@@ -281,9 +284,11 @@
         <div class="dialog-icon">🤖</div>
         <h3 class="dialog-title">A-FIT AI Coach</h3>
         <div id="ai-coach-content" class="dialog-message scrollable-content">
-            <p>Peça para eu montar um treino sob medida para você usando nosso catálogo de exercícios.</p>
+            <p style="font-size: 0.85rem; margin-bottom: 15px; opacity: 0.8;">
+                Este assistente usa o modelo <strong>GPT-4o-mini</strong>. Configure sua <em>API Key</em> em 💾 <strong>Backup</strong> para ativar. Eu montarei o treino ideal usando apenas os exercícios do nosso catálogo.
+            </p>
             <div class="ai-prompt-container">
-                <textarea id="ai-user-prompt" placeholder="Ex: Monte um treino ABC focado em pernas e ombros para nível iniciante..."></textarea>
+                <textarea id="ai-user-prompt" placeholder="Ex: Monte um treino focado em hipertrofia para braços e costas..."></textarea>
             </div>
             <div id="ai-status" class="ai-status"></div>
             <div id="ai-preview" class="ai-preview" style="display: none;"></div>

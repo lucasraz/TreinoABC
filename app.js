@@ -305,6 +305,12 @@ function updateProgress() {
     
     if (fill) fill.style.width = percent + '%';
     if (text) text.textContent = `${done}/${total} exercícios — ${percent}%`;
+
+    // Dispara celebração se atingir 100%
+    if (percent === 100 && total > 0) {
+        // Pequeno delay para a barra completar visualmente primeiro
+        setTimeout(showCelebration, 500);
+    }
 }
 
 // ============================================
@@ -1094,6 +1100,59 @@ function initApp() {
 
     document.getElementById('btn-export-backup').addEventListener('click', exportBackup);
     document.getElementById('input-import-backup').addEventListener('change', importBackup);
+
+    // Celebration events
+    document.getElementById('celeb-close-btn').addEventListener('click', closeCelebration);
+    document.getElementById('celebration-dialog').addEventListener('click', function(e) {
+        if (e.target === this) closeCelebration();
+    });
+}
+
+// ============================================
+// MÓDULO: Celebração (Feedback de Sucesso)
+// ============================================
+
+function showCelebration() {
+    const dialog = document.getElementById('celebration-dialog');
+    if (!dialog || dialog.open) return;
+
+    // Atualiza streak no modal
+    const streakVal = document.getElementById('celeb-streak');
+    if (streakVal) streakVal.textContent = statsData.streak || 0;
+
+    dialog.showModal();
+    startConfetti();
+}
+
+function closeCelebration() {
+    const dialog = document.getElementById('celebration-dialog');
+    if (dialog) dialog.close();
+}
+
+function startConfetti() {
+    const container = document.getElementById('confetti-container');
+    if (!container) return;
+    container.innerHTML = '';
+    
+    const colors = ['#facc15', '#4facfe', '#ffffff', '#ff4b2b'];
+    
+    for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        
+        // Posição e estilo aleatórios
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.width = (Math.random() * 8 + 4) + 'px';
+        confetti.style.height = (Math.random() * 10 + 5) + 'px';
+        
+        // Animação aleatória
+        const duration = Math.random() * 2 + 2; // 2s a 4s
+        const delay = Math.random() * 0.5;
+        confetti.style.animation = `confetti-fall ${duration}s linear ${delay}s forwards`;
+        
+        container.appendChild(confetti);
+    }
 }
 
 // Inicia quando o DOM estiver pronto

@@ -548,6 +548,8 @@ h1 {
     padding: 28px 24px 20px;
     max-width: 340px;
     width: 90%;
+    margin: auto;
+    inset: 0;
     box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
     animation: dialog-enter 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -601,6 +603,85 @@ h1 {
     font-family: 'Inter', sans-serif;
     cursor: pointer;
     transition: all var(--transition-fast);
+}
+
+.dialog-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+/* --- Settings / Backup Specific --- */
+.settings-dialog {
+    max-width: 400px;
+}
+
+.settings-dialog .dialog-icon {
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+}
+
+.settings-dialog h3 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+}
+
+.settings-description {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.settings-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.btn-dialog-primary {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent-gradient);
+    color: #000;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-dialog-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px var(--accent-glow);
+}
+
+.file-input-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.file-input-wrapper input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.file-input-wrapper .btn-dialog-secondary {
+    width: 100%;
+    pointer-events: none;
 }
 
 .dialog-btn:hover {

@@ -818,24 +818,45 @@ header {
 
 /* --- Settings Groups --- */
 .settings-group {
-    margin-bottom: 20px;
+    margin-bottom: 28px;
     text-align: left;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.settings-group label {
-    display: block;
-    font-size: 0.8rem;
-    color: var(--text-muted);
+.settings-group:last-of-type {
+    border-bottom: none;
+    margin-bottom: 12px;
+}
+
+.settings-group h4 {
+    font-size: 1rem;
+    color: var(--text-main);
     margin-bottom: 8px;
-    font-weight: 600;
+}
+
+.setting-item {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.setting-item label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--text-muted);
     text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .settings-help {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     color: var(--text-muted);
     margin-top: 6px;
-    font-style: italic;
+    opacity: 0.8;
+    line-height: 1.4;
 }
 
 .custom-input {

@@ -5,7 +5,7 @@
  * Network-first para CDN (Plyr, fontes).
  */
 
-const CACHE_NAME = 'treino-abc-v21';
+const CACHE_NAME = 'treino-abc-v22';
 const LOCAL_ASSETS = [
     '/',
     '/index.html',
@@ -69,7 +69,7 @@ self.addEventListener('fetch', function(event) {
     
     // Local assets: cache-first
     event.respondWith(
-        caches.match(event.request).then(function(cached) {
+        caches.match(event.request, { ignoreSearch: true }).then(function(cached) {
             return cached || fetch(event.request).then(function(response) {
                 const clone = response.clone();
                 caches.open(CACHE_NAME).then(function(cache) {

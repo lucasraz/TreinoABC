@@ -567,16 +567,19 @@ h1 {
 .btn-history {
     background: none;
     border: none;
-    font-size: 1.1rem;
+    color: var(--text-muted);
     cursor: pointer;
-    padding: 4px;
-    transition: transform var(--transition-fast);
-    filter: grayscale(0.3);
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
 }
 
 .btn-history:hover {
-    transform: scale(1.2);
-    filter: grayscale(0);
+    color: var(--accent-color);
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 5px var(--accent-glow));
 }
 
 /* --- Check Button --- */

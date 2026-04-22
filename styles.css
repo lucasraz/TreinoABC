@@ -39,13 +39,13 @@
 
 /* --- Plyr Specific Overrides --- */
 .plyr--full-ui.plyr--video .plyr__control--overlaid {
-    background: rgba(250, 204, 21, 0.9) !important;
-    color: #000 !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+    border: 2px solid #facc15 !important;
+    color: #facc15 !important;
 }
 
-.plyr--full-ui.plyr--video .plyr__control--overlaid svg,
-.plyr--full-ui.plyr--video .plyr__control--overlaid svg path {
-    fill: #000 !important;
+.plyr--full-ui.plyr--video .plyr__control--overlaid svg {
+    fill: #facc15 !important;
 }
 
 /* --- Reset & Base --- */

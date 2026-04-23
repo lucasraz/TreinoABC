@@ -421,11 +421,17 @@ function renderExercises(tab) {
     
     if (tipForTab) {
         const tipsCard = document.createElement('div');
-        tipsCard.className = 'coach-tips-card';
+        tipsCard.className = 'coach-tips-card collapsed'; // Colapsado por padrão
         tipsCard.innerHTML = `
             <div class="coach-tips-header">✨ Dicas do Coach</div>
             <div class="coach-tips-content">${tipForTab}</div>
         `;
+        
+        // Toggle Colapso
+        tipsCard.querySelector('.coach-tips-header').addEventListener('click', () => {
+            tipsCard.classList.toggle('collapsed');
+        });
+
         container.appendChild(tipsCard);
     }
 

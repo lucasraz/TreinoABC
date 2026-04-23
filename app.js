@@ -1073,7 +1073,7 @@ function renderEditorList() {
 
     const inputObs = document.createElement('input');
     inputObs.type = 'text';
-    inputObs.className = 'custom-input';
+    inputObs.className = 'editor-obs-input';
     inputObs.id = 'custom-ex-obs';
     inputObs.placeholder = 'Observações/Técnica (opcional)';
     

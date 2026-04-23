@@ -13,7 +13,7 @@
     <!-- Segurança: Content Security Policy -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
-        script-src 'self' https://cdn.plyr.io https://www.youtube.com https://s.ytimg.com;
+        script-src 'self' https://cdn.plyr.io https://www.youtube.com https://s.ytimg.com https://cdn.jsdelivr.net;
         style-src 'self' https://fonts.googleapis.com https://cdn.plyr.io 'unsafe-inline';
         font-src https://fonts.gstatic.com;
         frame-src https://www.youtube-nocookie.com https://www.youtube.com;
@@ -322,6 +322,8 @@
             navigator.serviceWorker.register('/sw.js?v=29').catch(() => {});
         }
     </script>
+    <!-- QR Code Generator -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.1/qrcode.min.js"></script>
 </body>
 
 </html>

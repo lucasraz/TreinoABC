@@ -1113,7 +1113,7 @@ function renderEditorList() {
     const btnQr = document.createElement('button');
     btnQr.type = 'button';
     btnQr.className = 'btn-share-workout btn-share-qr';
-    btnQr.innerHTML = '📱 QR Code';
+    btnQr.innerHTML = '🔳 QR Code';
     btnQr.addEventListener('click', (e) => { e.preventDefault(); showQrCode(); });
 
     // Botão Arquivo
@@ -2168,7 +2168,8 @@ function checkSharedWorkout() {
             while (b64.length % 4) b64 += "=";
             
             const jsonStr = decodeURIComponent(escape(atob(b64)));
-            const sharedData = JSON.parse(jsonStr);
+            const rawData = JSON.parse(jsonStr);
+            const sharedData = expandWorkoutData(rawData);
             
             if (sharedData && sharedData.t) {
                 // Limpa a URL para não processar novamente no reload
@@ -2197,7 +2198,42 @@ function checkSharedWorkout() {
 // NOVAS FUNÇÕES DE COMPARTILHAMENTO (PRO)
 // ============================================
 
-function exportWorkoutToFile() {
+// Minificação para diminuir o tamanho dos dados em links/QR
+function minifyWorkoutData(data) {
+    const min = { v: data.v, t: {}, d: data.d };
+    if (!data.t) return data;
+    for (let day in data.t) {
+        min.t[day] = data.t[day].map(ex => ({
+            i: ex.id,
+            n: ex.name,
+            g: ex.group,
+            s: ex.sets,
+            r: ex.reps,
+            y: ex.yt_id,
+            o: ex.obs
+        }));
+    }
+    return min;
+}
+
+function expandWorkoutData(min) {
+    if (!min.t || !min.t.A) return min; // Se não tem 'A', já está expandido ou é inválido
+    const exp = { v: min.v, t: {}, d: min.d };
+    for (let day in min.t) {
+        exp.t[day] = min.t[day].map(ex => ({
+            id: ex.i || generateExerciseId(),
+            name: ex.n || "Exercício",
+            group: ex.g || "Outros",
+            sets: ex.s || 3,
+            reps: ex.r || '12',
+            yt_id: ex.y || '',
+            obs: ex.o || ''
+        }));
+    }
+    return exp;
+}
+
+async function exportWorkoutToFile() {
     try {
         const treinos = Storage.get("custom_treinos", TREINOS);
         const tips = Storage.get("coach_tips", {});
@@ -2212,20 +2248,31 @@ function exportWorkoutToFile() {
         
         const jsonStr = JSON.stringify(shareData, null, 2);
         const blob = new Blob([jsonStr], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `treino_aura_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.aura`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        showDialog("📁", "Arquivo Gerado", "O arquivo .aura foi gerado com sucesso. Agora você pode enviá-lo via WhatsApp ou e-mail!");
+        const fileName = `treino_aura_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.aura`;
+        const file = new File([blob], fileName, { type: "application/json" });
+
+        // Tenta usar a API de compartilhamento nativa para o arquivo
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+                files: [file],
+                title: 'Meu Treino AURA FIT',
+                text: 'Aqui está o meu treino exportado!'
+            });
+        } else {
+            // Fallback: Download tradicional
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showDialog("📁", "Arquivo Gerado", "O arquivo foi baixado. Agora você pode enviá-lo manualmente.");
+        }
     } catch (err) {
-        console.error("Erro ao exportar arquivo:", err);
-        showDialog("❌", "Erro", "Não foi possível gerar o arquivo de exportação.");
+        console.error("Erro ao compartilhar arquivo:", err);
+        showDialog("❌", "Erro", "Não foi possível compartilhar o arquivo.");
     }
 }
 
@@ -2233,8 +2280,9 @@ function showQrCode() {
     try {
         const treinos = Storage.get("custom_treinos", TREINOS);
         const tips = Storage.get("coach_tips", {});
-        const shareData = { v: 1, t: treinos, d: tips };
-        const jsonStr = JSON.stringify(shareData);
+        const minData = minifyWorkoutData({ v: 1, t: treinos, d: tips });
+        const jsonStr = JSON.stringify(minData);
+        
         const b64 = btoa(unescape(encodeURIComponent(jsonStr)))
             .replace(/\+/g, "-")
             .replace(/\//g, "_")
@@ -2242,20 +2290,29 @@ function showQrCode() {
             
         const shareUrl = `${window.location.origin}${window.location.pathname}?share=${b64}`;
         
-        // Usando a API goqr.me para gerar o QR code
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(shareUrl)}`;
-        
-        const dialogContent = `
+        // Exibe o dialog primeiro com um container para o QR
+        showDialog("🔳", "QR Code de Treino", `
             <div style="text-align: center; padding: 10px;">
-                <p style="font-size: 0.85rem; margin-bottom: 15px; color: var(--text-muted);">Peça para o outro usuário escanear este código com a câmera do celular:</p>
-                <img src="${qrUrl}" alt="QR Code Treino" style="border-radius: 12px; border: 8px solid white; box-shadow: 0 4px 20px rgba(0,0,0,0.5); width: 220px; height: 220px;">
+                <p style="font-size: 0.8rem; margin-bottom: 15px; color: var(--text-muted);">Aponte a câmera para importar:</p>
+                <div id="qrcode-container" style="display: inline-block; padding: 10px; background: white; border-radius: 12px;"></div>
             </div>
-        `;
+        `);
         
-        showDialog("📱", "QR Code de Treino", dialogContent);
+        // Gera o QR code usando a biblioteca local
+        setTimeout(() => {
+            new QRCode(document.getElementById("qrcode-container"), {
+                text: shareUrl,
+                width: 220,
+                height: 220,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.L
+            });
+        }, 100);
+        
     } catch (err) {
         console.error("Erro ao gerar QR Code:", err);
-        showDialog("❌", "Erro", "Não foi possível gerar o QR Code.");
+        showDialog("❌", "Erro", "O treino é muito grande para gerar um QR Code. Tente usar a opção 'Arquivo'.");
     }
 }
 
@@ -2282,7 +2339,8 @@ function processImportCode(code) {
         while (b64.length % 4) b64 += "=";
         
         const jsonStr = decodeURIComponent(escape(atob(b64)));
-        const sharedData = JSON.parse(jsonStr);
+        const rawData = JSON.parse(jsonStr);
+        const sharedData = expandWorkoutData(rawData);
         
         if (sharedData && sharedData.t) {
             applySharedWorkout(sharedData);

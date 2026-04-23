@@ -149,7 +149,7 @@ function showDialog(icon, title, message) {
     const dialog = document.getElementById('app-dialog');
     document.getElementById('dialog-icon').textContent = icon;
     document.getElementById('dialog-title').textContent = title;
-    document.getElementById('dialog-message').textContent = message;
+    document.getElementById('dialog-message').innerHTML = message;
     dialog.showModal();
 }
 
@@ -1099,15 +1099,47 @@ function renderEditorList() {
     titleShare.textContent = 'Compartilhar';
     body.appendChild(titleShare);
 
+    const shareActions = document.createElement('div');
+    shareActions.className = 'share-actions-grid';
+
+    // Botão Link
     const btnShare = document.createElement('button');
     btnShare.type = 'button';
     btnShare.className = 'btn-share-workout';
-    btnShare.innerHTML = '🔗 Compartilhar este Treino (Link)';
-    btnShare.addEventListener('click', function(e) {
-        e.preventDefault();
-        shareWorkout();
-    });
-    body.appendChild(btnShare);
+    btnShare.innerHTML = '🔗 Link';
+    btnShare.addEventListener('click', (e) => { e.preventDefault(); shareWorkout(); });
+
+    // Botão QR Code
+    const btnQr = document.createElement('button');
+    btnQr.type = 'button';
+    btnQr.className = 'btn-share-workout btn-share-qr';
+    btnQr.innerHTML = '📱 QR Code';
+    btnQr.addEventListener('click', (e) => { e.preventDefault(); showQrCode(); });
+
+    // Botão Arquivo
+    const btnFile = document.createElement('button');
+    btnFile.type = 'button';
+    btnFile.className = 'btn-share-workout btn-share-file';
+    btnFile.innerHTML = '📁 Arquivo';
+    btnFile.addEventListener('click', (e) => { e.preventDefault(); exportWorkoutToFile(); });
+
+    shareActions.appendChild(btnShare);
+    shareActions.appendChild(btnQr);
+    shareActions.appendChild(btnFile);
+    body.appendChild(shareActions);
+
+    // Seção: Importação
+    const titleImport = document.createElement('div');
+    titleImport.className = 'editor-section-title';
+    titleImport.textContent = 'Importar';
+    body.appendChild(titleImport);
+
+    const btnImport = document.createElement('button');
+    btnImport.type = 'button';
+    btnImport.className = 'btn-import-workout';
+    btnImport.innerHTML = '📥 Importar Treino (Arquivo/Código)';
+    btnImport.addEventListener('click', (e) => { e.preventDefault(); triggerImport(); });
+    body.appendChild(btnImport);
     
     // Botão: Restaurar padrão
     const btnReset = document.createElement('button');
@@ -2160,3 +2192,146 @@ function checkSharedWorkout() {
         }
     }
 }
+        } catch (err) {
+            console.error("Erro ao importar treino compartilhado:", err);
+            showDialog("⚠️", "Erro de Importação", "O link de compartilhamento parece ser inválido ou expirou.");
+        }
+    }
+}
+
+// ============================================
+// NOVAS FUNÇÕES DE COMPARTILHAMENTO (PRO)
+// ============================================
+
+function exportWorkoutToFile() {
+    try {
+        const treinos = Storage.get("custom_treinos", TREINOS);
+        const tips = Storage.get("coach_tips", {});
+        
+        const shareData = {
+            v: 1,
+            t: treinos,
+            d: tips,
+            exported_at: new Date().toISOString(),
+            app: "AURA FIT"
+        };
+        
+        const jsonStr = JSON.stringify(shareData, null, 2);
+        const blob = new Blob([jsonStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `treino_aura_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.aura`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showDialog("📁", "Arquivo Gerado", "O arquivo .aura foi gerado com sucesso. Agora você pode enviá-lo via WhatsApp ou e-mail!");
+    } catch (err) {
+        console.error("Erro ao exportar arquivo:", err);
+        showDialog("❌", "Erro", "Não foi possível gerar o arquivo de exportação.");
+    }
+}
+
+function showQrCode() {
+    try {
+        const treinos = Storage.get("custom_treinos", TREINOS);
+        const tips = Storage.get("coach_tips", {});
+        const shareData = { v: 1, t: treinos, d: tips };
+        const jsonStr = JSON.stringify(shareData);
+        const b64 = btoa(unescape(encodeURIComponent(jsonStr)))
+            .replace(/\+/g, "-")
+            .replace(/\//g, "_")
+            .replace(/=+$/, "");
+            
+        const shareUrl = `${window.location.origin}${window.location.pathname}?share=${b64}`;
+        
+        // Usando a API goqr.me para gerar o QR code
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(shareUrl)}`;
+        
+        const dialogContent = `
+            <div style="text-align: center; padding: 10px;">
+                <p style="font-size: 0.85rem; margin-bottom: 15px; color: var(--text-muted);">Peça para o outro usuário escanear este código com a câmera do celular:</p>
+                <img src="${qrUrl}" alt="QR Code Treino" style="border-radius: 12px; border: 8px solid white; box-shadow: 0 4px 20px rgba(0,0,0,0.5); width: 220px; height: 220px;">
+            </div>
+        `;
+        
+        showDialog("📱", "QR Code de Treino", dialogContent);
+    } catch (err) {
+        console.error("Erro ao gerar QR Code:", err);
+        showDialog("❌", "Erro", "Não foi possível gerar o QR Code.");
+    }
+}
+
+function triggerImport() {
+    const option = prompt("Como deseja importar?\n1 - Arquivo (.aura)\n2 - Código de Texto");
+    
+    if (option === "1") {
+        document.getElementById('import-workout-file').click();
+    } else if (option === "2") {
+        const code = prompt("Cole o código de importação aqui:");
+        if (code) processImportCode(code);
+    }
+}
+
+function processImportCode(code) {
+    try {
+        // Limpa o código se for uma URL
+        let b64 = code;
+        if (code.includes("share=")) {
+            b64 = code.split("share=")[1].split("&")[0];
+        }
+        
+        b64 = b64.replace(/-/g, "+").replace(/_/g, "/");
+        while (b64.length % 4) b64 += "=";
+        
+        const jsonStr = decodeURIComponent(escape(atob(b64)));
+        const sharedData = JSON.parse(jsonStr);
+        
+        if (sharedData && sharedData.t) {
+            applySharedWorkout(sharedData);
+        }
+    } catch (err) {
+        console.error("Erro ao processar código:", err);
+        showDialog("❌", "Código Inválido", "O código fornecido não é válido.");
+    }
+}
+
+function applySharedWorkout(data) {
+    if (confirm("Treino identificado! Deseja aplicá-lo ao seu aplicativo? Isso substituirá seus treinos atuais.")) {
+        Storage.set("custom_treinos", data.t);
+        if (data.d) Storage.set("coach_tips", data.d);
+        Storage.set("split_type", "CUSTOM");
+        alert("✅ Treino importado com sucesso!");
+        window.location.reload();
+    }
+}
+
+// Listener para importação de arquivo
+document.addEventListener('DOMContentLoaded', () => {
+    const fileInput = document.getElementById('import-workout-file');
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data && data.t) {
+                        applySharedWorkout(data);
+                    } else {
+                        showDialog("❌", "Arquivo Inválido", "Este arquivo não parece ser um treino válido do AURA FIT.");
+                    }
+                } catch (err) {
+                    console.error("Erro ao ler arquivo:", err);
+                    showDialog("❌", "Erro", "Não foi possível ler o arquivo.");
+                }
+            };
+            reader.readAsText(file);
+        });
+    }
+});

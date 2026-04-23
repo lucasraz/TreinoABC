@@ -415,6 +415,20 @@ function renderExercises(tab) {
     const workouts = getActiveWorkouts();
     const exercises = workouts[tab] || [];
 
+    // Renderiza Dicas do Coach se existirem para este treino específico ou globalmente
+    const coachTips = Storage.get('coach_tips', {});
+    const tipForTab = coachTips[tab] || coachTips['geral'];
+    
+    if (tipForTab) {
+        const tipsCard = document.createElement('div');
+        tipsCard.className = 'coach-tips-card';
+        tipsCard.innerHTML = `
+            <div class="coach-tips-header">✨ Dicas do Coach</div>
+            <div class="coach-tips-content">${tipForTab}</div>
+        `;
+        container.appendChild(tipsCard);
+    }
+
     exercises.forEach(ex => {
         const data = savedData[ex.id] || { carga: '', checked: false };
         const card = document.createElement('div');
@@ -439,6 +453,13 @@ function renderExercises(tab) {
         }
         info.appendChild(title);
         info.appendChild(series);
+
+        if (ex.obs) {
+            const obs = document.createElement('div');
+            obs.className = 'ex-obs';
+            obs.textContent = ex.obs;
+            info.appendChild(obs);
+        }
 
         const checkBtn = document.createElement('button');
         checkBtn.className = 'check-btn' + (data.checked ? ' checked' : '');
@@ -964,6 +985,19 @@ function renderEditorList() {
             controlsRow.appendChild(repsGroup);
             controlsRow.appendChild(btnEditYt);
 
+            // Row: Observações/Técnica
+            const obsRow = document.createElement('div');
+            obsRow.className = 'editor-card-obs';
+            const obsInput = document.createElement('input');
+            obsInput.type = 'text';
+            obsInput.className = 'editor-obs-input';
+            obsInput.placeholder = 'Obs/Técnica (ex: Drop-set, Foco no ombro)';
+            obsInput.value = ex.obs || '';
+            obsInput.addEventListener('change', function() {
+                editorWorkout[index].obs = this.value;
+            });
+            obsRow.appendChild(obsInput);
+
             // Eventos Drag & Drop (aplicados ao card inteiro)
             item.addEventListener('dragstart', handleDragStart);
             item.addEventListener('dragover', handleDragOver);
@@ -973,6 +1007,7 @@ function renderEditorList() {
 
             item.appendChild(headerRow);
             item.appendChild(controlsRow);
+            item.appendChild(obsRow);
             list.appendChild(item);
         });
         
@@ -1029,6 +1064,12 @@ function renderEditorList() {
     inputYt.className = 'custom-input';
     inputYt.id = 'custom-ex-yt';
     inputYt.placeholder = 'Link YouTube (opcional)';
+
+    const inputObs = document.createElement('input');
+    inputObs.type = 'text';
+    inputObs.className = 'custom-input';
+    inputObs.id = 'custom-ex-obs';
+    inputObs.placeholder = 'Observações/Técnica (opcional)';
     
     const btnAdd = document.createElement('button');
     btnAdd.type = 'button';
@@ -1042,6 +1083,7 @@ function renderEditorList() {
     form.appendChild(inputName);
     form.appendChild(inputsRow);
     form.appendChild(inputYt);
+    form.appendChild(inputObs);
     form.appendChild(btnAdd);
     body.appendChild(form);
     
@@ -1070,6 +1112,7 @@ function addCustomExercise() {
     const setsInput = document.getElementById('custom-ex-sets');
     const repsInput = document.getElementById('custom-ex-reps');
     const ytInput = document.getElementById('custom-ex-yt');
+    const obsInput = document.getElementById('custom-ex-obs');
     
     if (!nameInput) return;
     
@@ -1082,6 +1125,7 @@ function addCustomExercise() {
     const sets = parseInt(setsInput.value) || 3;
     const reps = repsInput.value.trim() || '12';
     const ytId = extractYouTubeId(ytInput.value);
+    const obs = obsInput ? obsInput.value.trim() : '';
     
     // Tenta encontrar o grupo no catálogo automaticamente pelo nome
     let group = null;
@@ -1093,10 +1137,11 @@ function addCustomExercise() {
     editorWorkout.push({
         id: generateExerciseId(),
         name: name,
-        group: group,
+        group: group || 'Custom',
         sets: sets,
         reps: reps,
-        yt_id: ytId
+        obs: obs,
+        yt_id: ytId || ''
     });
     
     renderEditorList();
@@ -1110,9 +1155,9 @@ function saveEditor() {
     // Inicializa customTreinos se não existe
     if (!customTreinos) {
         customTreinos = {
-            'A': TREINOS.A.map(ex => ({ id: ex.id, name: ex.name, group: ex.group, sets: ex.sets, reps: ex.reps, yt_id: ex.yt_id || '' })),
-            'B': TREINOS.B.map(ex => ({ id: ex.id, name: ex.name, group: ex.group, sets: ex.sets, reps: ex.reps, yt_id: ex.yt_id || '' })),
-            'C': TREINOS.C.map(ex => ({ id: ex.id, name: ex.name, group: ex.group, sets: ex.sets, reps: ex.reps, yt_id: ex.yt_id || '' }))
+            'A': TREINOS.A.map(ex => ({ id: ex.id, name: ex.name, group: ex.group, sets: ex.sets, reps: ex.reps, obs: ex.obs || '', yt_id: ex.yt_id || '' })),
+            'B': TREINOS.B.map(ex => ({ id: ex.id, name: ex.name, group: ex.group, sets: ex.sets, reps: ex.reps, obs: ex.obs || '', yt_id: ex.yt_id || '' })),
+            'C': TREINOS.C.map(ex => ({ id: ex.id, name: ex.name, group: ex.group, sets: ex.sets, reps: ex.reps, obs: ex.obs || '', yt_id: ex.yt_id || '' }))
         };
     }
     
@@ -1122,6 +1167,7 @@ function saveEditor() {
         group: ex.group,
         sets: ex.sets,
         reps: ex.reps,
+        obs: ex.obs || '',
         series: ex.series,
         yt_id: ex.yt_id || ''
     }));
@@ -1824,12 +1870,19 @@ async function generateWorkoutWithAI() {
         const catalogText = EXERCISE_CATALOG.map(e => `${e.name} (${e.group})`).join(', ');
         const provider = Storage.get('ai_provider', 'openai');
         
-        const systemPrompt = `Você é um Personal Trainer de elite. Monte um treino baseado no pedido do usuário.
-        IMPORTANTE: Use APENAS exercícios deste catálogo: ${catalogText}.
+        const systemPrompt = `Você é um Personal Trainer de elite especializado em musculação. 
+        Monte um treino personalizado seguindo estritamente as diretrizes do usuário.
+        
+        REGRAS DE OURO:
+        1. Use APENAS exercícios deste catálogo: ${catalogText}.
+        2. Técnicas (Drop-set, Rest-pause, etc.), dicas de postura ou foco muscular DEVEM ir no campo "obs" de cada exercício.
+        3. Informações sobre frequência, volume semanal, aquecimento e progressão de carga DEVEM ir no campo "geral".
+        
         Responda EXCLUSIVAMENTE em formato JSON puro, seguindo este modelo:
         {
-          "A": [{ "name": "Nome", "sets": 3, "reps": "12" }],
-          "B": [...]
+          "A": [{ "name": "Nome", "sets": 3, "reps": "12", "obs": "Ex: Drop-set na última série" }],
+          "B": [...],
+          "geral": "Ex: Sugestão de frequência: ABC-Descanso-ABC. Aquecimento: 5min de cardio leve."
         }`;
 
         let endpoint = '';
@@ -1923,21 +1976,36 @@ async function generateWorkoutWithAI() {
         }
 
         content = content.trim();
-        if (content.startsWith('```')) {
-            content = content.replace(/```json|```/g, '').trim();
+        
+        // Extrator de JSON mais robusto (busca o primeiro { e o último })
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+            content = jsonMatch[0];
         }
 
         aiGeneratedWorkout = JSON.parse(content);
         
         status.textContent = "✅ Treino gerado com sucesso!";
         let previewHtml = '<strong>Preview do Treino:</strong><br><br>';
+        
         for (const tab in aiGeneratedWorkout) {
+            if (tab === 'geral') continue; // Pula dicas gerais no preview de exercícios
+            
             previewHtml += `<strong>Treino ${tab}:</strong><br>`;
             aiGeneratedWorkout[tab].forEach(ex => {
-                previewHtml += `- ${ex.name}: ${ex.sets}x${ex.reps}<br>`;
+                previewHtml += `- ${ex.name}: ${ex.sets}x${ex.reps}`;
+                if (ex.obs) previewHtml += ` <small>(${ex.obs})</small>`;
+                previewHtml += `<br>`;
             });
             previewHtml += '<br>';
         }
+
+        if (aiGeneratedWorkout.geral) {
+            previewHtml += `<div style="background:rgba(99,102,241,0.1); padding:10px; border-radius:8px; font-size:0.85rem; border:1px solid rgba(99,102,241,0.2)">`;
+            previewHtml += `<strong>💡 Dicas do Coach:</strong><br>${aiGeneratedWorkout.geral}`;
+            previewHtml += `</div><br>`;
+        }
+
         preview.innerHTML = previewHtml;
         preview.style.display = 'block';
         document.getElementById('ai-apply-btn').style.display = 'block';
@@ -1957,6 +2025,8 @@ function applyAIWorkout() {
         // Mapeia exercícios da IA para o formato do app (adicionando IDs e Groups)
         const finalWorkout = {};
         for (const tab in aiGeneratedWorkout) {
+            if (tab === 'geral') continue;
+            
             finalWorkout[tab] = aiGeneratedWorkout[tab].map(ex => {
                 const catalogEx = EXERCISE_CATALOG.find(c => c.name === ex.name);
                 return {
@@ -1965,9 +2035,17 @@ function applyAIWorkout() {
                     group: catalogEx ? catalogEx.group : 'Outros',
                     sets: ex.sets || 3,
                     reps: ex.reps || '12',
+                    obs: ex.obs || '',
                     yt_id: ''
                 };
             });
+        }
+        
+        // Salva dicas gerais se existirem
+        if (aiGeneratedWorkout.geral) {
+            Storage.set('coach_tips', { geral: aiGeneratedWorkout.geral });
+        } else {
+            Storage.set('coach_tips', {});
         }
         
         customTreinos = finalWorkout;

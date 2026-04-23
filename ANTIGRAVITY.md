@@ -38,7 +38,14 @@ App web para acompanhamento de treinos de musculação no formato personalizáve
 - **Dialog nativo**: Uso extensivo da API `<dialog>` para uma experiência de sistema.
 - **Rebranding v24-v28**: Transição completa de A-FIT para AURA FIT, com logotipo transparente e identidade visual premium.
 
-## Versão Atual: v37
+## Versão Atual: v38
+- [x] **AI Coach Pro**: Suporte a prompts detalhados com inclusão automática de técnicas avançadas (Drop-sets, Rest-pause) no campo `obs`.
+- [x] **Dicas do Coach**: Novo sistema de dicas gerais (frequência, volume) exibidas no topo dos treinos.
+- [x] **Data Schema Update**: Exercícios agora suportam o campo `obs` (string) para observações técnicas.
+- [x] **UI/UX**: Novo componente `.coach-tips-card` e renderização de `.ex-obs` nos cards de exercícios.
+
+## Histórico de Versões
+### v37
 - [x] **UI (Dark Play Button)**: Nova abordagem para o botão de play: fundo escuro semi-transparente com ícone e borda em dourado. Isso resolve o problema de visibilidade do ícone e mantém a elegância do design.
 - [x] **UX (High Priority Play Icon)**: Reforço dos estilos do player de vídeo.
 - [x] **Inicialização**: Consolidação do fluxo de boot do app em `initApp` para evitar conflitos de eventos.
@@ -63,3 +70,4 @@ App web para acompanhamento de treinos de musculação no formato personalizáve
 1. **PWA v28**: Uso de caminhos absolutos (`/`) para garantir que o manifesto seja aceito por todos os navegadores móveis.
 2. **Branding**: O nome AURA FIT reflete a nova identidade visual dourada/prata com logo transparente.
 3. **Robustez Offline**: O Service Worker v28 possui um fallback de navegação que redireciona para a home em caso de falha de rede.
+4. **AI Coach Upgrade (v38)**: Transi��o de um esquema JSON r�gido para um flex�vel que aceita observa��es t�cnicas (obs) e dicas de treinamento (geral), melhorando drasticamente a qualidade dos treinos gerados para usu�rios avan�ados.

@@ -2192,12 +2192,6 @@ function checkSharedWorkout() {
         }
     }
 }
-        } catch (err) {
-            console.error("Erro ao importar treino compartilhado:", err);
-            showDialog("⚠️", "Erro de Importação", "O link de compartilhamento parece ser inválido ou expirou.");
-        }
-    }
-}
 
 // ============================================
 // NOVAS FUNÇÕES DE COMPARTILHAMENTO (PRO)

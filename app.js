@@ -1092,6 +1092,22 @@ function renderEditorList() {
     form.appendChild(inputObs);
     form.appendChild(btnAdd);
     body.appendChild(form);
+
+    // Seção: Compartilhamento
+    const titleShare = document.createElement('div');
+    titleShare.className = 'editor-section-title';
+    titleShare.textContent = 'Compartilhar';
+    body.appendChild(titleShare);
+
+    const btnShare = document.createElement('button');
+    btnShare.type = 'button';
+    btnShare.className = 'btn-share-workout';
+    btnShare.innerHTML = '🔗 Compartilhar este Treino (Link)';
+    btnShare.addEventListener('click', function(e) {
+        e.preventDefault();
+        shareWorkout();
+    });
+    body.appendChild(btnShare);
     
     // Botão: Restaurar padrão
     const btnReset = document.createElement('button');
@@ -1325,6 +1341,7 @@ function addFromCatalog(catalogEx) {
 // ============================================
 
 function initApp() {
+    checkSharedWorkout();
     // --- Lógica de Negócio ---
     checkDayReset();
     updateStatsUI();
@@ -2067,3 +2084,79 @@ function applyAIWorkout() {
 
 // Inicialização Global
 document.addEventListener('DOMContentLoaded', initApp);
+
+// ============================================
+// MÓDULO: Compartilhamento de Treino
+// ============================================
+
+async function shareWorkout() {
+    try {
+        const treinos = Storage.get("custom_treinos", TREINOS);
+        const tips = Storage.get("coach_tips", {});
+        
+        const shareData = {
+            v: 1, // Versão do schema de compartilhamento
+            t: treinos,
+            d: tips
+        };
+        
+        const jsonStr = JSON.stringify(shareData);
+        // Codifica para base64 seguro para URL
+        const b64 = btoa(unescape(encodeURIComponent(jsonStr)))
+            .replace(/\+/g, "-")
+            .replace(/\//g, "_")
+            .replace(/=+$/, "");
+            
+        const shareUrl = `${window.location.origin}${window.location.pathname}?share=${b64}`;
+        
+        if (navigator.share) {
+            await navigator.share({
+                title: "Meu Treino no AURA FIT",
+                text: "Confira este treino que montei no AURA FIT!",
+                url: shareUrl
+            });
+        } else {
+            await navigator.clipboard.writeText(shareUrl);
+            showDialog("🔗", "Link Copiado", "O link do treino foi copiado para sua área de transferência. Compartilhe com quem quiser!");
+        }
+    } catch (err) {
+        console.error("Erro ao compartilhar:", err);
+        showDialog("❌", "Erro", "Não foi possível gerar o link de compartilhamento.");
+    }
+}
+
+function checkSharedWorkout() {
+    const params = new URLSearchParams(window.location.search);
+    const sharedDataB64 = params.get("share");
+    
+    if (sharedDataB64) {
+        try {
+            // Decodifica base64 (URL safe)
+            let b64 = sharedDataB64.replace(/-/g, "+").replace(/_/g, "/");
+            while (b64.length % 4) b64 += "=";
+            
+            const jsonStr = decodeURIComponent(escape(atob(b64)));
+            const sharedData = JSON.parse(jsonStr);
+            
+            if (sharedData && sharedData.t) {
+                // Limpa a URL para não processar novamente no reload
+                const newUrl = window.location.origin + window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
+
+                setTimeout(() => {
+                    if (confirm("Você recebeu um novo treino compartilhado! Deseja aplicá-lo ao seu aplicativo? Isso substituirá seus treinos atuais.")) {
+                        Storage.set("custom_treinos", sharedData.t);
+                        if (sharedData.d) Storage.set("coach_tips", sharedData.d);
+                        Storage.set("split_type", "CUSTOM");
+                        
+                        alert("✅ Treino importado com sucesso!");
+                        window.location.reload();
+                    }
+                }, 500);
+            }
+        } catch (err) {
+            console.error("Erro ao importar treino compartilhado:", err);
+            showDialog("⚠️", "Erro de Importação", "O link de compartilhamento parece ser inválido ou expirou.");
+        }
+    }
+}

@@ -2194,30 +2194,36 @@ function checkSharedWorkout() {
 
 // Minificação para diminuir o tamanho dos dados em links/QR
 function minifyWorkoutData(data) {
-    const min = { v: data.v, t: {}, d: data.d };
     if (!data.t) return data;
+    const min = { v: data.v, t: {} };
+    // Só incluímos dicas se forem curtas para não estourar o QR
+    if (data.d && JSON.stringify(data.d).length < 200) {
+        min.d = data.d;
+    }
+    
     for (let day in data.t) {
-        min.t[day] = data.t[day].map(ex => ({
-            i: ex.id,
-            n: ex.name,
-            g: ex.group,
-            s: ex.sets,
-            r: ex.reps,
-            y: ex.yt_id,
-            o: ex.obs
-        }));
+        min.t[day] = data.t[day].map(ex => {
+            const item = {
+                n: ex.name,
+                s: ex.sets,
+                r: ex.reps,
+                y: ex.yt_id
+            };
+            if (ex.obs) item.o = ex.obs;
+            return item;
+        });
     }
     return min;
 }
 
 function expandWorkoutData(min) {
-    if (!min.t || !min.t.A) return min; // Se não tem 'A', já está expandido ou é inválido
-    const exp = { v: min.v, t: {}, d: min.d };
+    if (!min.t || (!min.t.A && !min.t.a)) return min;
+    const exp = { v: min.v, t: {}, d: min.d || {} };
     for (let day in min.t) {
         exp.t[day] = min.t[day].map(ex => ({
-            id: ex.i || generateExerciseId(),
+            id: generateExerciseId(), // IDs são gerados novos na importação
             name: ex.n || "Exercício",
-            group: ex.g || "Outros",
+            group: "Custom", // Grupo padrão para importados
             sets: ex.s || 3,
             reps: ex.r || '12',
             yt_id: ex.y || '',
@@ -2242,26 +2248,27 @@ async function exportWorkoutToFile() {
         };
         
         const jsonStr = JSON.stringify(shareData, null, 2);
-        const blob = new Blob([jsonStr], { type: "application/json" });
+        // Usamos text/plain para máxima compatibilidade no compartilhamento
+        const blob = new Blob([jsonStr], { type: "text/plain" });
         const fileName = `treino_aura_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.aura`;
-        const file = new File([blob], fileName, { type: "application/json" });
+        const file = new File([blob], fileName, { type: "text/plain" });
 
         const instructionText = `
             <div style="text-align: left; font-size: 0.85rem; line-height: 1.4;">
                 <p><strong>Como funciona o arquivo .aura?</strong></p>
-                <p>Este arquivo contém toda a estrutura do seu treino, incluindo séries, repetições e <strong>links dos vídeos</strong>.</p>
+                <p>Este arquivo contém toda a estrutura do seu treino e links de vídeos.</p>
                 <hr style="opacity: 0.1; margin: 10px 0;">
                 <p><strong>Como usar:</strong></p>
                 <ol style="padding-left: 20px;">
-                    <li>Envie este arquivo para quem você quiser.</li>
-                    <li>A pessoa deve abrir o AURA FIT e ir em <strong>🛠️ Treino</strong> > <strong>Importar</strong>.</li>
-                    <li>Basta selecionar o arquivo e o treino será carregado instantaneamente!</li>
+                    <li>Envie este arquivo (via WhatsApp, E-mail, etc).</li>
+                    <li>No outro aparelho, abra o AURA FIT e vá em <strong>🛠️ Treino</strong> > <strong>Importar</strong>.</li>
+                    <li>Selecione o arquivo recebido.</li>
                 </ol>
             </div>
         `;
 
-        // Tenta usar a API de compartilhamento nativa para o arquivo
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        // Tenta usar a API de compartilhamento nativa (comum em celulares)
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({
                 files: [file],
                 title: 'Meu Treino AURA FIT',
@@ -2269,7 +2276,7 @@ async function exportWorkoutToFile() {
             });
             showDialog("📁", "Arquivo Compartilhado", instructionText);
         } else {
-            // Fallback: Download tradicional
+            // Fallback: Download tradicional (comum em desktops ou navegadores limitados)
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -2278,11 +2285,17 @@ async function exportWorkoutToFile() {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            showDialog("📁", "Arquivo Baixado", instructionText);
+            
+            showDialog("📁", "Arquivo Baixado", `
+                ${instructionText}
+                <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; margin-top: 10px; border: 1px dashed rgba(255,255,255,0.2);">
+                    <small>⚠️ Seu navegador não suporta compartilhamento direto. O arquivo foi <strong>baixado na sua pasta de Downloads</strong>. Envie-o manualmente.</small>
+                </div>
+            `);
         }
     } catch (err) {
         console.error("Erro ao compartilhar arquivo:", err);
-        showDialog("❌", "Erro", "Não foi possível compartilhar o arquivo.");
+        showDialog("❌", "Erro", "Não foi possível compartilhar. Tente novamente ou verifique as permissões do navegador.");
     }
 }
 

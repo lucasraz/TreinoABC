@@ -31,17 +31,12 @@ App web para acompanhamento de treinos de musculação no formato personalizáve
 - **Validação de Schema**: Dados do `localStorage` são validados antes do uso para evitar crashes.
 - **Dialog nativo**: Uso extensivo da API `<dialog>` para uma experiência de sistema.
 
-## Versão Atual: v39 (Sharing Pro Fix)
-- [x] **AI Coach Pro**: Suporte a prompts complexos, técnicas avançadas (Drop-set, Rest-pause) e dicas estruturadas.
-- [x] **Dicas do Coach**: Card colapsável no topo dos treinos para orientações gerais.
-- [x] **Data Schema Update**: Exercícios agora suportam o campo `obs` (string) para observações técnicas.
-- [x] **Compartilhamento Pro v2**: 
-    - ~~Link Base64~~: Removido conforme solicitado para focar em métodos offline.
-    - **Arquivo .aura**: Exportação com instruções embutidas e fluxo de importação simplificado.
-    - **QR Code Fix**: Aprimoramento da densidade de dados e validação de tamanho para garantir leitura.
-- [x] **Fix Encoding**: Normalização de codificação UTF-8 para evitar caracteres corrompidos na interface.
+## Versão Atual: v40 (Extreme Sharing Fix)
+- [x] **Extreme QR Minification**: Removido overhead de IDs e Grupos para QR Codes; agora suporta treinos muito maiores no mesmo espaço.
+- [x] **File Share Compatibility**: Alterado MIME type para `text/plain` e melhorado o fallback de download para casos onde `navigator.share` falha.
+- [x] **Import IDs**: Geração de novos IDs únicos na importação para evitar colisões com treinos existentes.
 
 ## Funcionalidades
 - [x] **AI Coach**: Geração de treinos via IA.
 - [x] **Divisões Dinâmicas**: Suporta A, AB, ABC, ABCD, ABCDE e CUSTOM.
-- [x] **Compartilhamento Offline**: Envio via QR Code ou Arquivo .aura (com suporte a vídeos).
+- [x] **Compartilhamento Offline v2**: QR Code ultra-otimizado e Arquivo .aura com instruções claras.

@@ -1096,34 +1096,28 @@ function renderEditorList() {
     // Seção: Compartilhamento
     const titleShare = document.createElement('div');
     titleShare.className = 'editor-section-title';
-    titleShare.textContent = 'Compartilhar';
+    titleShare.textContent = 'Compartilhar Treino';
     body.appendChild(titleShare);
 
     const shareActions = document.createElement('div');
     shareActions.className = 'share-actions-grid';
-
-    // Botão Link
-    const btnShare = document.createElement('button');
-    btnShare.type = 'button';
-    btnShare.className = 'btn-share-workout';
-    btnShare.innerHTML = '🔗 Link';
-    btnShare.addEventListener('click', (e) => { e.preventDefault(); shareWorkout(); });
 
     // Botão QR Code
     const btnQr = document.createElement('button');
     btnQr.type = 'button';
     btnQr.className = 'btn-share-workout btn-share-qr';
     btnQr.innerHTML = '🔳 QR Code';
+    btnQr.title = 'Compartilhar via QR Code (Presencial)';
     btnQr.addEventListener('click', (e) => { e.preventDefault(); showQrCode(); });
 
     // Botão Arquivo
     const btnFile = document.createElement('button');
     btnFile.type = 'button';
     btnFile.className = 'btn-share-workout btn-share-file';
-    btnFile.innerHTML = '📁 Arquivo';
+    btnFile.innerHTML = '📁 Arquivo .aura';
+    btnFile.title = 'Exportar arquivo para enviar por WhatsApp/E-mail';
     btnFile.addEventListener('click', (e) => { e.preventDefault(); exportWorkoutToFile(); });
 
-    shareActions.appendChild(btnShare);
     shareActions.appendChild(btnQr);
     shareActions.appendChild(btnFile);
     body.appendChild(shareActions);
@@ -2177,7 +2171,7 @@ function checkSharedWorkout() {
                 window.history.replaceState({}, document.title, newUrl);
 
                 setTimeout(() => {
-                    if (confirm("Você recebeu um novo treino compartilhado! Deseja aplicá-lo ao seu aplicativo? Isso substituirá seus treinos atuais.")) {
+                    if (confirm("Você recebeu um novo treino compartilhado via QR Code! Deseja aplicá-lo ao seu aplicativo? Isso substituirá seus treinos atuais.")) {
                         Storage.set("custom_treinos", sharedData.t);
                         if (sharedData.d) Storage.set("coach_tips", sharedData.d);
                         Storage.set("split_type", "CUSTOM");
@@ -2189,7 +2183,7 @@ function checkSharedWorkout() {
             }
         } catch (err) {
             console.error("Erro ao importar treino compartilhado:", err);
-            showDialog("⚠️", "Erro de Importação", "O link de compartilhamento parece ser inválido ou expirou.");
+            // Não mostra erro intrusivo aqui pois pode ser apenas um acesso normal sem share
         }
     }
 }
@@ -2243,13 +2237,28 @@ async function exportWorkoutToFile() {
             t: treinos,
             d: tips,
             exported_at: new Date().toISOString(),
-            app: "AURA FIT"
+            app: "AURA FIT",
+            _instrucoes: "Para usar este arquivo: 1. Abra o AURA FIT no outro aparelho. 2. Vá em Editar Treino. 3. Clique em 'Importar Treino (Arquivo/Código)'. 4. Selecione este arquivo."
         };
         
         const jsonStr = JSON.stringify(shareData, null, 2);
         const blob = new Blob([jsonStr], { type: "application/json" });
         const fileName = `treino_aura_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.aura`;
         const file = new File([blob], fileName, { type: "application/json" });
+
+        const instructionText = `
+            <div style="text-align: left; font-size: 0.85rem; line-height: 1.4;">
+                <p><strong>Como funciona o arquivo .aura?</strong></p>
+                <p>Este arquivo contém toda a estrutura do seu treino, incluindo séries, repetições e <strong>links dos vídeos</strong>.</p>
+                <hr style="opacity: 0.1; margin: 10px 0;">
+                <p><strong>Como usar:</strong></p>
+                <ol style="padding-left: 20px;">
+                    <li>Envie este arquivo para quem você quiser.</li>
+                    <li>A pessoa deve abrir o AURA FIT e ir em <strong>🛠️ Treino</strong> > <strong>Importar</strong>.</li>
+                    <li>Basta selecionar o arquivo e o treino será carregado instantaneamente!</li>
+                </ol>
+            </div>
+        `;
 
         // Tenta usar a API de compartilhamento nativa para o arquivo
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -2258,6 +2267,7 @@ async function exportWorkoutToFile() {
                 title: 'Meu Treino AURA FIT',
                 text: 'Aqui está o meu treino exportado!'
             });
+            showDialog("📁", "Arquivo Compartilhado", instructionText);
         } else {
             // Fallback: Download tradicional
             const url = URL.createObjectURL(blob);
@@ -2268,7 +2278,7 @@ async function exportWorkoutToFile() {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            showDialog("📁", "Arquivo Gerado", "O arquivo foi baixado. Agora você pode enviá-lo manualmente.");
+            showDialog("📁", "Arquivo Baixado", instructionText);
         }
     } catch (err) {
         console.error("Erro ao compartilhar arquivo:", err);
@@ -2280,6 +2290,8 @@ function showQrCode() {
     try {
         const treinos = Storage.get("custom_treinos", TREINOS);
         const tips = Storage.get("coach_tips", {});
+        
+        // Minificamos os dados para que o QR Code não fique muito denso/ilegível
         const minData = minifyWorkoutData({ v: 1, t: treinos, d: tips });
         const jsonStr = JSON.stringify(minData);
         
@@ -2290,29 +2302,42 @@ function showQrCode() {
             
         const shareUrl = `${window.location.origin}${window.location.pathname}?share=${b64}`;
         
+        // Verifica tamanho do QR (limite prático seguro para a maioria dos scanners é ~2000 chars)
+        if (shareUrl.length > 2500) {
+            showDialog("⚠️", "Treino Muito Grande", "Seu treino tem muitos exercícios e o QR Code ficaria impossível de ler. <br><br>Por favor, use a opção <strong>📁 Arquivo .aura</strong> para compartilhar.");
+            return;
+        }
+
         // Exibe o dialog primeiro com um container para o QR
         showDialog("🔳", "QR Code de Treino", `
-            <div style="text-align: center; padding: 10px;">
-                <p style="font-size: 0.8rem; margin-bottom: 15px; color: var(--text-muted);">Aponte a câmera para importar:</p>
-                <div id="qrcode-container" style="display: inline-block; padding: 10px; background: white; border-radius: 12px;"></div>
+            <div style="text-align: center; padding: 5px;">
+                <p style="font-size: 0.8rem; margin-bottom: 12px; color: var(--text-muted);">Aponte a câmera para importar o treino:</p>
+                <div id="qrcode-container" style="display: inline-block; padding: 12px; background: white; border-radius: 12px; border: 4px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.1);"></div>
+                <p style="font-size: 0.75rem; margin-top: 12px; color: var(--text-muted); font-style: italic;">
+                    Toda a estrutura e links de vídeos serão transferidos.
+                </p>
             </div>
         `);
         
-        // Gera o QR code usando a biblioteca local
+        // Gera o QR code usando a biblioteca local com delay para garantir que o DOM rendeu
         setTimeout(() => {
-            new QRCode(document.getElementById("qrcode-container"), {
+            const container = document.getElementById("qrcode-container");
+            if (!container) return;
+            
+            container.innerHTML = ''; // Limpa antes de gerar
+            new QRCode(container, {
                 text: shareUrl,
-                width: 220,
-                height: 220,
+                width: 200,
+                height: 200,
                 colorDark : "#000000",
                 colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.L
+                correctLevel : QRCode.CorrectLevel.M // Nível Médio é mais equilibrado que L
             });
-        }, 100);
+        }, 150);
         
     } catch (err) {
         console.error("Erro ao gerar QR Code:", err);
-        showDialog("❌", "Erro", "O treino é muito grande para gerar um QR Code. Tente usar a opção 'Arquivo'.");
+        showDialog("❌", "Erro", "Não foi possível gerar o QR Code. Use a opção de Arquivo.");
     }
 }
 

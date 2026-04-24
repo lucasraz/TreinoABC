@@ -31,17 +31,17 @@ App web para acompanhamento de treinos de musculação no formato personalizáve
 - **Validação de Schema**: Dados do `localStorage` são validados antes do uso para evitar crashes.
 - **Dialog nativo**: Uso extensivo da API `<dialog>` para uma experiência de sistema.
 
-## Versão Atual: v38 (AI Coach Pro & Sharing Pro)
+## Versão Atual: v39 (Sharing Pro Fix)
 - [x] **AI Coach Pro**: Suporte a prompts complexos, técnicas avançadas (Drop-set, Rest-pause) e dicas estruturadas.
 - [x] **Dicas do Coach**: Card colapsável no topo dos treinos para orientações gerais.
 - [x] **Data Schema Update**: Exercícios agora suportam o campo `obs` (string) para observações técnicas.
-- [x] **Compartilhamento Pro**: 
-    - **Link Base64**: Compartilhamento rápido via URL.
-    - **Arquivo .aura**: Exportação e importação de arquivos locais para evitar dependência de navegador.
-    - **QR Code**: Geração dinâmica de código para compartilhamento presencial.
+- [x] **Compartilhamento Pro v2**: 
+    - ~~Link Base64~~: Removido conforme solicitado para focar em métodos offline.
+    - **Arquivo .aura**: Exportação com instruções embutidas e fluxo de importação simplificado.
+    - **QR Code Fix**: Aprimoramento da densidade de dados e validação de tamanho para garantir leitura.
 - [x] **Fix Encoding**: Normalização de codificação UTF-8 para evitar caracteres corrompidos na interface.
 
 ## Funcionalidades
 - [x] **AI Coach**: Geração de treinos via IA.
 - [x] **Divisões Dinâmicas**: Suporta A, AB, ABC, ABCD, ABCDE e CUSTOM.
-- [x] **Compartilhamento Multimodal**: Envio via Link, QR Code ou Arquivo .aura.
+- [x] **Compartilhamento Offline**: Envio via QR Code ou Arquivo .aura (com suporte a vídeos).

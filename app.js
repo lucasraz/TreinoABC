@@ -1107,16 +1107,14 @@ function renderEditorList() {
     btnQr.type = 'button';
     btnQr.className = 'btn-share-workout btn-share-qr';
     btnQr.innerHTML = '🔳 QR Code';
-    btnQr.title = 'Compartilhar via QR Code (Presencial)';
-    btnQr.addEventListener('click', (e) => { e.preventDefault(); showQrCode(); });
+    btnQr.onclick = () => { showQrCode(); };
 
     // Botão Arquivo
     const btnFile = document.createElement('button');
     btnFile.type = 'button';
     btnFile.className = 'btn-share-workout btn-share-file';
     btnFile.innerHTML = '📁 Arquivo .aura';
-    btnFile.title = 'Exportar arquivo para enviar por WhatsApp/E-mail';
-    btnFile.addEventListener('click', (e) => { e.preventDefault(); exportWorkoutToFile(); });
+    btnFile.onclick = () => { exportWorkoutToFile(); };
 
     shareActions.appendChild(btnQr);
     shareActions.appendChild(btnFile);
@@ -2299,58 +2297,121 @@ async function exportWorkoutToFile() {
     }
 }
 
-function showQrCode() {
+function b64EncodeUnicode(str) {
+    // Codificação Base64 segura para UTF-8 e URL
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+        return String.fromCharCode('0x' + p1);
+    })).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+async function exportWorkoutToFile() {
     try {
         const treinos = Storage.get("custom_treinos", TREINOS);
         const tips = Storage.get("coach_tips", {});
         
-        // Minificamos os dados para que o QR Code não fique muito denso/ilegível
+        const shareData = {
+            v: 1,
+            t: treinos,
+            d: tips,
+            app: "AURA FIT",
+            _instrucoes: "Importar no menu 'Editar Treino'."
+        };
+        
+        const jsonStr = JSON.stringify(shareData);
+        const fileName = `treino_aura_${Date.now()}.aura`;
+        const blob = new Blob([jsonStr], { type: "text/plain;charset=utf-8" });
+
+        const instructionText = `
+            <div style="text-align: left; font-size: 0.85rem; line-height: 1.4;">
+                <p><strong>Como usar o arquivo:</strong></p>
+                <ol style="padding-left: 20px;">
+                    <li>Envie o arquivo recebido para o outro celular.</li>
+                    <li>Lá, abra o AURA FIT e vá em <strong>🛠️ Treino</strong> > <strong>Importar</strong>.</li>
+                </ol>
+            </div>
+        `;
+
+        // Tenta compartilhar o arquivo (Mobile)
+        const file = new File([blob], fileName, { type: "text/plain" });
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+                files: [file],
+                title: 'Treino AURA FIT',
+                text: 'Meu treino exportado'
+            });
+            showDialog("📁", "Pronto!", "Arquivo enviado com sucesso.");
+        } else {
+            // Download (Desktop/Fallback)
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 100);
+            
+            showDialog("📁", "Download Iniciado", `
+                ${instructionText}
+                <p style="margin-top:10px; font-size:0.7rem; opacity:0.7;">O arquivo foi salvo na pasta de downloads.</p>
+            `);
+        }
+    } catch (err) {
+        alert("Erro ao exportar: " + err.message);
+    }
+}
+
+function showQrCode() {
+    try {
+        if (typeof QRCode === 'undefined') {
+            throw new Error("Biblioteca de QR Code não carregada. Verifique sua conexão.");
+        }
+
+        const treinos = Storage.get("custom_treinos", TREINOS);
+        const tips = Storage.get("coach_tips", {});
         const minData = minifyWorkoutData({ v: 1, t: treinos, d: tips });
         const jsonStr = JSON.stringify(minData);
         
-        const b64 = btoa(unescape(encodeURIComponent(jsonStr)))
-            .replace(/\+/g, "-")
-            .replace(/\//g, "_")
-            .replace(/=+$/, "");
-            
-        const shareUrl = `${window.location.origin}${window.location.pathname}?share=${b64}`;
+        const baseUrl = window.location.href.split('?')[0];
+        const shareUrl = `${baseUrl}?share=${b64}`;
         
-        // Verifica tamanho do QR (limite prático seguro para a maioria dos scanners é ~2000 chars)
-        if (shareUrl.length > 2500) {
-            showDialog("⚠️", "Treino Muito Grande", "Seu treino tem muitos exercícios e o QR Code ficaria impossível de ler. <br><br>Por favor, use a opção <strong>📁 Arquivo .aura</strong> para compartilhar.");
+        console.log("AURA DEBUG - Share URL Length:", shareUrl.length);
+        console.log("AURA DEBUG - Base URL:", baseUrl);
+        
+        if (shareUrl.length > 2900) {
+            showDialog("⚠️", "Treino Muito Grande", "Reduza o número de exercícios ou use a opção de Arquivo.");
             return;
         }
 
-        // Exibe o dialog primeiro com um container para o QR
-        showDialog("🔳", "QR Code de Treino", `
-            <div style="text-align: center; padding: 5px;">
-                <p style="font-size: 0.8rem; margin-bottom: 12px; color: var(--text-muted);">Aponte a câmera para importar o treino:</p>
-                <div id="qrcode-container" style="display: inline-block; padding: 12px; background: white; border-radius: 12px; border: 4px solid white; box-shadow: 0 4px 15px rgba(0,0,0,0.1);"></div>
-                <p style="font-size: 0.75rem; margin-top: 12px; color: var(--text-muted); font-style: italic;">
-                    Toda a estrutura e links de vídeos serão transferidos.
-                </p>
+        showDialog("🔳", "QR Code", `
+            <div style="text-align: center;">
+                <div id="qrcode-container" style="display: inline-block; padding: 15px; background: white; border-radius: 8px;"></div>
+                <p style="font-size: 0.7rem; margin-top: 10px; opacity:0.8;">Aponte a câmera do outro celular para este código.</p>
             </div>
         `);
         
-        // Gera o QR code usando a biblioteca local com delay para garantir que o DOM rendeu
         setTimeout(() => {
             const container = document.getElementById("qrcode-container");
-            if (!container) return;
-            
-            container.innerHTML = ''; // Limpa antes de gerar
-            new QRCode(container, {
-                text: shareUrl,
-                width: 200,
-                height: 200,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.M // Nível Médio é mais equilibrado que L
-            });
-        }, 150);
+            if (container) {
+                console.log("AURA DEBUG - Gerando QR Code para:", shareUrl);
+                try {
+                    new QRCode(container, {
+                        text: shareUrl,
+                        width: 250,
+                        height: 250,
+                        correctLevel : QRCode.CorrectLevel.L
+                    });
+                } catch (qrErr) {
+                    container.innerHTML = `<p style="color:red; font-size:0.8rem;">Erro ao gerar QR: ${qrErr.message}</p>`;
+                }
+            }
+        }, 300);
         
     } catch (err) {
-        console.error("Erro ao gerar QR Code:", err);
-        showDialog("❌", "Erro", "Não foi possível gerar o QR Code. Use a opção de Arquivo.");
+        alert("Erro no QR Code: " + err.message);
     }
 }
 

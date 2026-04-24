@@ -314,16 +314,18 @@
         integrity="sha384-5sFtjkYC6dakcOUFuxVZ++Jv0U/CI+tM55PY+p/wi9vBpjvgY8/FTbDb5DRFMdqb"
         crossorigin="anonymous">
     </script>
-    <script src="/app.js?v=29"></script>
+    <!-- QR Code Generator -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.1/qrcode.min.js"></script>
+    <script src="/app.js?v=30"></script>
 
     <!-- PWA Registration -->
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js?v=29').catch(() => {});
+            navigator.serviceWorker.register('/sw.js?v=30').catch(() => {});
         }
     </script>
-    <!-- QR Code Generator -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.1/qrcode.min.js"></script>
+    <!-- Hidden file input for importing -->
+    <input type="file" id="import-workout-file" style="display: none;" accept=".aura,text/plain">
 </body>
 
 </html>

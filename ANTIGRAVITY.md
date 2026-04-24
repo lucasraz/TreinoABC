@@ -31,8 +31,9 @@ App web para acompanhamento de treinos de musculação no formato personalizáve
 - **Validação de Schema**: Dados do `localStorage` são validados antes do uso para evitar crashes.
 - **Dialog nativo**: Uso extensivo da API `<dialog>` para uma experiência de sistema.
 
-## Versão Atual: v40 (Extreme Sharing Fix)
-- [x] **Extreme QR Minification**: Removido overhead de IDs e Grupos para QR Codes; agora suporta treinos muito maiores no mesmo espaço.
+## Versão Atual: v41
+- [x] **Extreme QR Minification** - v40: Otimização extrema de minificação de dados para QR Code e exportação de arquivos.
+- [x] **v41**: Correção de cache (SW v30), robustez na construção de URLs de compartilhamento e logs de debug para diagnóstico.
 - [x] **File Share Compatibility**: Alterado MIME type para `text/plain` e melhorado o fallback de download para casos onde `navigator.share` falha.
 - [x] **Import IDs**: Geração de novos IDs únicos na importação para evitar colisões com treinos existentes.
 
